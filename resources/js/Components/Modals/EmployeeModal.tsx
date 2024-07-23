@@ -51,11 +51,11 @@ const EmployeeModal = () => {
                             <Separator />
                             <p className="italic text-muted-foreground text-xs font-light">Site</p>
                         </div>                                           
-                        {/* <div>
+                        <div>
                             <Label className='text-base'>{`${data.date_of_birth}`}</Label>
                             <Separator />
                             <p className="italic text-muted-foreground text-xs font-light">DOB</p>
-                        </div>                                              */}
+                        </div>                                             
                         <div>
                             <Label className='text-base'>{`${!data.shift?'Shift Not Set':data.shift.schedule}`}</Label>
                             <Separator />
