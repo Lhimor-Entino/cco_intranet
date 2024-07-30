@@ -37,7 +37,7 @@ const Welcome:FC<Props> = ({announcements}) => {
             <Head title="Welcome" />
             <Layout>
                 <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container pb-2.5'>
-                    <Header />
+                    {/* <Header /> */}
                     
                     <ScrollArea className='flex-1 border rounded-lg p-6'>
                         <div className='flex flex-col gap-y-12'>

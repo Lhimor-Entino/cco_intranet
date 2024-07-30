@@ -54,7 +54,7 @@ interface Props {
     grouped_metrics?:UserMetricGroup[];
 }
 const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,project,agents,date_range,agent,agent_averages,grouped_metrics}) => {
-    
+    console.log('isTeamLead', is_team_leader, 'isAdmin:', is_admin);
     const {projects,auth} = usePage<Page<PageProps>>().props;
     const {user} = auth;
     const isSelf = user.id === agent?.id;

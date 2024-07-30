@@ -2,9 +2,9 @@ import Layout from '@/Components/Layout/Layout';
 import TeamsModal from '@/Pages/TeamSettingsComponents/TeamsModal';
 import TeamsComboBox from '@/Components/TeamsComboBox';
 import { Button } from '@/Components/ui/button';
-import { Team, User } from '@/types';
-import { Inertia } from '@inertiajs/inertia';
-import { Head, useForm } from '@inertiajs/inertia-react';
+import { PageProps, Team, User } from '@/types';
+import { Inertia, Page } from '@inertiajs/inertia';
+import { Head, useForm, usePage } from '@inertiajs/inertia-react';
 import { ArrowLeftRight, Edit3Icon, PackagePlus, UserPlus2, UserPlus2Icon, UserRoundXIcon } from 'lucide-react';
 import {FC, FormEventHandler, useState} from 'react';
 import { toast } from 'sonner';
@@ -36,7 +36,7 @@ const TeamSettings:FC<Props> = ({team,team_leads,teams,teamless_agents}) => {
     const [teamForm,setTeamForm] = useState<{show?:boolean;edit?:boolean}>({});
     const handleToggleShowForm = (edit?:boolean) => setTeamForm(val=>({show:!val.show,edit})); 
     const [unassignAgent,setUnassignAgent] = useState<User>();
-
+const {projects} = usePage<Page<PageProps>>().props
     return (
         <>
             <Head title="Team Settings" />
