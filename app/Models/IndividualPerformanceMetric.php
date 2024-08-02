@@ -9,42 +9,48 @@ class IndividualPerformanceMetric extends Model
 {
     use HasFactory;
     protected $guarded = [];
-    protected $with = ['project','user'];
+    protected $with = ['project', 'user'];
     protected $appends = ['daily_goal'];
 
-    
 
-    public function project(){
+
+    public function project()
+    {
         return $this->belongsTo(Project::class);
     }
 
-    public function user_metrics(){
+    public function user_metrics()
+    {
         return $this->hasMany(IndividualPerformanceUserMetric::class);
     }
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
-    
-    public function getDailyGoalAttribute(){
-        if($this->goal!==0){
-            if($this->format==='number'){
-                return $this->goal.'.00 '.$this->unit;
+
+    public function getDailyGoalAttribute()
+    {
+        if ($this->goal !== 0) {
+            $noDecimal = ($this->goal === (int) $this->goal);
+            if ($this->format === 'number') {
+                return $this->goal . ($noDecimal ? '.00 ' : ' ') . $this->unit;
             }
-            if($this->format==='percentage'){
-                return $this->goal.'.00%';
+            if ($this->format === 'percentage') {
+                return $this->goal . ($noDecimal ? '.00% ' : '% ');
             }
-            if($this->format==='duration'){
+            if ($this->format === 'duration') {
                 return $this->minutesToHHMMSS($this->goal);
             }
-            if($this->format==='rate'){
-                return $this->goal.'.00 per '.$this->rate_unit;
+            if ($this->format === 'rate') {
+                return $this->goal . ($noDecimal ? '.00 per ' : ' per ') . $this->rate_unit;
             }
         }
         return 'No Daily Goals';
     }
 
-    private function minutesToHHMMSS($minutes){
+    private function minutesToHHMMSS($minutes)
+    {
         $totalSeconds = $minutes * 60;
         $hours = floor($totalSeconds / 3600);
         $remainingSeconds = $totalSeconds % 3600;
@@ -56,6 +62,5 @@ class IndividualPerformanceMetric extends Model
         $formattedSeconds = str_pad($secondsPart, 2, '0', STR_PAD_LEFT);
 
         return "$formattedHours:$formattedMinutes:$formattedSeconds";
-
     }
 }

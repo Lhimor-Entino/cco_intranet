@@ -74,7 +74,8 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
     const handleSetGoal:ChangeEventHandler<HTMLInputElement> = (e) => {
         const val = e.target.value;
         if(val === '' || !val) return setData('goal',0);
-        const num = parseInt(val);
+        e.target.value = e.target.value.replace(/^0+(?=\d)/,'');
+        const num = (data.format === 'duration'? parseInt(val) : parseFloat(val));
         if(isNaN(num)) return;
         setData('goal',num);
     }
@@ -98,6 +99,8 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
 
     const onFormatChange = (format:MetricFormat) => {
         const unit = format === 'percentage'?'%':format === 'duration'?'Minutes':'Calls';
+        /**Parse Integer if selected format is duration**/
+        setData('goal', format === 'duration'? Math.floor(data.goal) : data.goal);
         setData(val=>({
             ...val,
             format,
@@ -206,7 +209,7 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
                             </div>
                         </Label>
                         <div className='relative'>
-                            <Input required={!noGoal} disabled={processing || noGoal} type='text' value={data.goal} onChange={handleSetGoal} />
+                            <Input required={!noGoal} disabled={processing || noGoal} type='number' step="0.01" className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value={data.goal} onChange={handleSetGoal} />
                             <Label className='text-muted-foreground absolute right-3.5 top-3.5'>
                                 {data.format !== 'rate'?data.unit: `${data.unit} per ${data.rate_unit}` }
                             </Label>

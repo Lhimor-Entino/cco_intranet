@@ -5,7 +5,9 @@ import { NavItems } from '@/Pages/Welcome';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { ScrollArea } from './ui/scroll-area';
 import { ActivityIcon, BadgeInfoIcon, Dot, GaugeIcon, Globe2Icon, LucideIcon } from 'lucide-react';
-import { Inertia } from '@inertiajs/inertia';
+import { Inertia, Page } from '@inertiajs/inertia';
+import { usePage } from '@inertiajs/inertia-react';
+import { PageProps, User } from '@/types';
 
 
 
@@ -14,6 +16,29 @@ interface Props {
 }
 
 const MenuSheet:FC<Props> = ({children}) => { 
+    const {user} = usePage<Page<PageProps>>().props.auth;
+    const isTeamLead = (user:User) => {
+        if(user=== null) {return false;}
+        return user.position == 'TEAM LEADER' ||
+        user.position == 'TEAM LEADER 1' ||
+        user.position == 'TEAM LEADER 2' ||
+        user.position == 'TEAM LEADER 3' ||
+        user.position == 'TEAM LEADER 4' ||
+        user.position == 'TEAM LEADER 5' ||
+        user.position == 'TEAM LEADER 6' ||
+        user.position == 'TEAM LEAD' ||
+        user.position == 'TEAM LEAD 1' ||
+        user.position == 'TEAM LEAD 2' ||
+        user.position == 'TEAM LEAD 3' ||
+        user.position == 'TEAM LEAD 4' ||
+        user.position == 'TEAM LEAD 5' ||
+        user.position == 'TEAM LEAD 6' 
+    };
+    const hasTeam = (user:User) => {
+        if(user=== null) {return false;}
+        return !!user.team && !!user?.team_id;
+    }
+    
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -40,12 +65,22 @@ const MenuSheet:FC<Props> = ({children}) => {
                                     <AccordionContent>
                                         <div className='flex flex-col gap-y-2.5'>
                                             {
-                                                navItem.items.map((item) => (
-                                                    <Button onClick={()=>item.href!=="#" && Inertia.get(item.href)} disabled={item.href==='#'} variant='outline' key={item.name} className='flex items-center justify-start'>
-                                                        <Dot className='h-7 w-7 mr-1.5' />
-                                                        <span className='truncate'>{item.name}</span>
-                                                    </Button>
-                                                ))
+                                                navItem.items.map((item) => {
+                                                    /**MODIFICATION: Change default page list if teamleader (From Individual Into Team Performance Dashboard)**/
+                                                       if(isTeamLead(user) && hasTeam(user) && item.href === route('individual_performance_dashboard.index') && item.name === 'Individual Performance Dashboard'){
+                                                            item.href = route('individual_performance_dashboard.team');
+                                                            item.name = "Team Performance Dashboard";
+                                                       }
+                                                       
+                                                    /**END**/
+
+                                                    return (
+                                                        <Button onClick={() => item.href !== "#" && Inertia.get(item.href)} disabled={item.href==='#'} variant='outline' key={item.name} className='flex items-center justify-start'>
+                                                            <Dot className='h-7 w-7 mr-1.5' />
+                                                            <span className='truncate'>{item.name}</span>
+                                                        </Button>
+                                                    )
+                                                })
                                             }
                                         </div>
                                     </AccordionContent>

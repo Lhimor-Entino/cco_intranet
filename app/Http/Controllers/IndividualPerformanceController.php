@@ -618,7 +618,7 @@ class IndividualPerformanceController extends Controller
             'project_id' => $request->project_id,
             'user_id' => Auth::id(),
             'metric_name' => $request->metric_name,
-            'goal' => !$request->format == 'duration' ? $request->goal : $duration,
+            'goal' => !($request->format == 'duration') ? $request->goal : $duration,
             'format' => $request->format,
             'unit' => $request->unit,
             'rate_unit' => $request->rate_unit
@@ -640,7 +640,7 @@ class IndividualPerformanceController extends Controller
         $duration = 0;
         if ($request->format == 'duration' && $request->unit == 'Minutes') $duration = $request->goal;
         if ($request->format == 'duration' && $request->unit == 'Hours') $duration = $request->goal * 60;
-        if ($request->format == 'duration' && $request->unit == 'Seconds') $duration = $request->goal / 60;
+        if ($request->format == 'duration' && $request->unit == 'Seconds') $duration = $request->goal / 60.00;
 
         $metric = IndividualPerformanceMetric::findOrFail($metric_id);
         $metric->update([

@@ -53,8 +53,8 @@ interface Props {
     agent_averages?:UserMetricAverage[];
     grouped_metrics?:UserMetricGroup[];
 }
+
 const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,project,agents,date_range,agent,agent_averages,grouped_metrics}) => {
-    console.log('isTeamLead', is_team_leader, 'isAdmin:', is_admin);
     const {projects,auth} = usePage<Page<PageProps>>().props;
     const {user} = auth;
     const isSelf = user.id === agent?.id;
@@ -232,7 +232,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                         </AccordionContent>
                                     </AccordionItem>                                      
                                 </Accordion>
-                                <Accordion  type='single' collapsible className="w-full">                                    
+                                <Accordion  defaultValue='trends' type='single' collapsible className="w-full">                                    
                                     <AccordionItem value='trends'>
                                         <AccordionTrigger className='text-lg font-bold tracking-tight'>
                                             {`${!isSelf?'Agent':'My'}`} Daily Trends from {format(date_range.from,'PP')} to {format(date_range.to,'PP')}

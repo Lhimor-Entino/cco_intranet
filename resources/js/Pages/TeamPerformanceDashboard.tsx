@@ -33,16 +33,18 @@ interface Props {
     user_metrics :IndividualPerformanceUserMetric[];
     team_trends:TeamTrend[];
     top_performers: TopPerformer[];
+    projects: Project[];
 }
 
-const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,teams,team, breakdown,team_trends,top_performers}) => {
+const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,teams,team, breakdown,team_trends,top_performers,projects}) => {
 
     const {user} = usePage<Page<PageProps>>().props.auth;
     const [date, setDate] = useState<DateRange | undefined>(date_range);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.team',{team_id:t.id}));
     const ownTeam = user.team_id===team.id;
     const navigate = () =>Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id,date}));
-    
+    const project = projects.find(data => data.id === user.project_id);
+    console.log('Projects: ', user);
     const formattedTrends:Trend[] = useMemo(()=>{
         return team_trends.map(trend=>({
             metricName:trend.metric_name,
@@ -67,6 +69,7 @@ const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
                             <TeamsComboBox teams={teams} onTeamSelect={onTeamSelect} selectedTeam={team} size='sm' />
+                            {/* {(is_admin) && (<><label>Project</label><ProjectSelectionComboBox projects={projects} selectedProject={project} isAdmin={is_admin} onSelectProject={navigate} /></>)} */}
                             <div className='flex items-center'>
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -115,9 +118,9 @@ const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,
                             <div className='overflow-auto'>
                                 {(!!date_range?.to && !!date_range?.from) && (
                                     <div className='h-auto flex flex-col gap-y-2.5'>
-                                        <Accordion defaultValue={['averages']} type='multiple' className="w-full">                                    
+                                        <Accordion defaultValue={['averages', 'trends', 'tops']} type='multiple' className="w-full">                                    
                                             <AccordionItem value='averages'>
-                                                <AccordionTrigger className='text-lg font-bold tracking-tight'>
+                                                <AccordionTrigger  className='text-lg font-bold tracking-tight'>
                                                     {`${!ownTeam?team.name:"My Team"}'s`} Averages from {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>

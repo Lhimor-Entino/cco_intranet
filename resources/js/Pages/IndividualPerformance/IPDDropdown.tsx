@@ -38,7 +38,7 @@ const IPDDropdown:FC<IPDDropdownProps> = ({isAdmin,className,project_id,isTeamLe
                         <Dot className='w-6 h-6 mr-0.5' />
                         Individual Performance
                     </DropdownMenuItem>
-                    {isAdmin&&(<DropdownMenuItem onClick={()=>Inertia.get(route('individual_performance_dashboard.project'))}>
+                    {(isAdmin || isTeamLead )&&(<DropdownMenuItem onClick={()=>Inertia.get(route('individual_performance_dashboard.project'))}>
                         <Dot className='w-6 h-6 mr-0.5' />
                         Project Performance
                     </DropdownMenuItem>)}

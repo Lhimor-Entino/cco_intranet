@@ -53,6 +53,7 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
         if(isNaN(+value)) return;
         const score = +value;
         setFormData(formData.map(data=>data.metric_id === id ? {...data,score} : data));
+        console.log('Form Data: ', formData, ' Value: ', value);
     };
 
     const handleNotApplicable = (id:number) =>()=> setFormData(formData.map(data=>data.metric_id === id ? {...data,not_applicable:!data.not_applicable,score:0} : data));
@@ -98,7 +99,7 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
                         <TableCell key={metric.metric_id} >
                             <div className='flex items-center'>
                                 <div className='relative'>                                
-                                    <Input autoComplete='off' id={`{item-${metric.metric_id.toString()}}`} disabled={loading||metric.not_applicable} className='h-9 w-64 text-left rounded-r-none' placeholder='0' value={metric.score} onChange={e=>handleChange(metric.metric_id,e.target.value)} />
+                                    <Input type="number" autoComplete='off' id={`{item-${metric.metric_id.toString()}}`} disabled={loading||metric.not_applicable} className='[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-64 text-left rounded-r-none' placeholder='0' value={metric.score} onChange={e=>{ e.target.value = e.target.value.replace(/^0+(?=\d)/,''); return handleChange(metric.metric_id,e.target.value)}} />
                                     <label htmlFor={`{item-${metric.metric_id.toString()}}`} className={cn('top-2.5 right-2.5 text-muted-foreground italic text-xs absolute transition duration-300',metric.not_applicable && 'opacity-50')}>
                                         {metric.metric.unit}
                                         {metric.metric.format==='rate' && metric.metric.rate_unit && ` per ${metric.metric.rate_unit}`}

@@ -39,8 +39,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
     const [date, setDate] = useState<DateRange | undefined>(date_range);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.project',{project_id:t.id}));
     const ownProject = user.team_id===project.id;
-    const navigate = () =>Inertia.get(route('individual_performance_dashboard.project',{project_id:project.id,date}));
-
+    const navigate = (project:Project) =>Inertia.get(route('individual_performance_dashboard.project',{project_id:project.id,date}));
     const formattedTrends:Trend[] = useMemo(()=>{
         return project_trends.map(trend=>({
             metricName:trend.metric_name,
@@ -103,7 +102,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                     />
                                     </PopoverContent>
                                 </Popover>
-                                <Button size='sm' onClick={navigate} variant='secondary' className='rounded-l-none'>
+                                <Button size='sm' onClick={() => {navigate(project);}} variant='secondary' className='rounded-l-none'>
                                     Go
                                     <SquareArrowRightIcon className='h-5 w-5 ml-2' />
                                 </Button>
@@ -113,7 +112,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                             <div className='overflow-auto'>
                                 {(!!date_range?.to && !!date_range?.from) && (
                                     <div className='h-auto flex flex-col gap-y-2.5'>
-                                        <Accordion defaultValue={['averages']} type='multiple' className="w-full">                                    
+                                        <Accordion defaultValue={['averages','trends','tops']} type='multiple' className="w-full">                                    
                                             <AccordionItem value='averages'>
                                                 <AccordionTrigger className='text-lg font-bold tracking-tight'>
                                                     {`${!ownProject?project.name:"My Project"}'s`} Averages from {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
