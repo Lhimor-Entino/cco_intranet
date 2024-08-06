@@ -2,17 +2,21 @@ import { Button } from '@/Components/ui/button';
 import { TableCell, TableRow } from '@/Components/ui/table';
 import { minutesToHHMMSS } from '@/lib/utils';
 import { IndividualPerformanceMetric } from '@/types/metric';
-import { PencilIcon, Trash2Icon } from 'lucide-react';
+import { get } from 'lodash';
+import { Grip, PencilIcon, Trash2Icon } from 'lucide-react';
 import {FC} from 'react';
+import { DraggableProvided, DraggableStateSnapshot } from 'react-beautiful-dnd';
 
 interface Props {
     metric:IndividualPerformanceMetric;
     onEdit:(metric:IndividualPerformanceMetric)=>void;
     onDelete:(metric:IndividualPerformanceMetric)=>void;
+    provided: DraggableProvided;
+    snapshot: DraggableStateSnapshot;
+    index:number;
 }
 
-const MetricItem:FC<Props> = ({metric,onEdit,onDelete}) => {
-
+const MetricItem:FC<Props> = ({metric,onEdit,onDelete,provided,snapshot,index}) => {
     const isInSecondsOrMinutes = (unit:string,daily_goal:string) => {
         let parts = daily_goal.split(':');
 
@@ -30,8 +34,16 @@ const MetricItem:FC<Props> = ({metric,onEdit,onDelete}) => {
 
         return 0;
     }
+    const grid = 8;
+    const getItemStyle = (isDragging: boolean, draggableStyle:any) => ({
+        // change background colour if dragging
+        background: isDragging ? "rgba(255, 255, 255, 0.2)" : "transparent",
+        // styles we need to apply on draggables
+        ...draggableStyle
+      });
     return (
-        <TableRow key={metric.id}>
+        <TableRow  ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}  key={metric.id}>
+            <TableCell>{index}</TableCell>
             <TableCell className="font-medium">{metric.metric_name}</TableCell>
             <TableCell>{`${metric.user.first_name} ${metric.user.last_name}`}</TableCell>
             <TableCell className='capitalize'>{`${metric.format}`}</TableCell>

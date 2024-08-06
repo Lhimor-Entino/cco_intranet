@@ -17,6 +17,7 @@ export interface IndividualPerformanceMetric extends TimeStamp {
     user:User;
     project:Project;
     user_metrics:IndividualPerformanceUserMetric[];
+    position:number;
 }
 
 

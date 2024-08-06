@@ -594,7 +594,7 @@ class IndividualPerformanceController extends Controller
     {
         if (!$this->is_admin()) abort(403);
         return Inertia::render('IndividualPerformanceSettings', [
-            'metrics' => !$project_id ? null : IndividualPerformanceMetric::where('project_id', $project_id)->get(),
+            'metrics' => !$project_id ? null : IndividualPerformanceMetric::where('project_id', $project_id)->orderBy('position', 'asc')->get(),
             'project' => $project_id ? Project::findOrFail($project_id) : null
         ]);
     }
@@ -652,7 +652,21 @@ class IndividualPerformanceController extends Controller
         ]);
         return redirect()->back();
     }
-
+    /**JOSH - ADDED SAVE COLUMN REODERING*************************************************************/
+    public function order(Request $request)
+    {
+        if (!$this->is_admin()) abort(403);
+        $metrics = $request['metrics'];
+        $response = [];
+        foreach ($metrics as $metric) {
+            $data = IndividualPerformanceMetric::findOrFail($metric['id']);
+            $data->update(['position' => $metric['position']]);
+            array_push($response,  $data);
+        }
+        return response()->json($response);
+        // return redirect()->back();
+    }
+    /*************************************************************************************************/
     public function destroy($metric_id)
     {
         if (!$this->is_admin()) abort(403);

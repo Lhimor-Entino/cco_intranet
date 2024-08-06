@@ -53,7 +53,6 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
         if(isNaN(+value)) return;
         const score = +value;
         setFormData(formData.map(data=>data.metric_id === id ? {...data,score} : data));
-        console.log('Form Data: ', formData, ' Value: ', value);
     };
 
     const handleNotApplicable = (id:number) =>()=> setFormData(formData.map(data=>data.metric_id === id ? {...data,not_applicable:!data.not_applicable,score:0} : data));

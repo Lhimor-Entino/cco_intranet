@@ -10,11 +10,13 @@ class Project extends Model
     use HasFactory;
     protected $fillable = ['name'];
 
-    public function users(){
+    public function users()
+    {
         return $this->hasMany(User::class);
     }
 
-    public function metrics(){
-        return $this->hasMany(IndividualPerformanceMetric::class);
+    public function metrics()
+    {
+        return $this->hasMany(IndividualPerformanceMetric::class)->orderBy('position', 'asc');
     }
 }
