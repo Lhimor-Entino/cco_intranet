@@ -8,7 +8,7 @@ import { Inertia, Page } from '@inertiajs/inertia';
 import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionComboBox';
 import { IndividualPerformanceMetric } from '@/types/metric';
 import { Button } from '@/Components/ui/button';
-import { BetweenHorizontalStart, CircleHelp, HashIcon, Info, PackagePlusIcon, Pencil, PencilIcon, Save, Trash2Icon } from 'lucide-react';
+import { BetweenHorizontalStart, CircleCheckBig, CircleHelp, HashIcon, Info, Loader2, PackagePlusIcon, Pencil, PencilIcon, Save, Trash2Icon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import MetricModal from './IndividualPerformance/Settings/MetricModal';
 import MetricItem from './IndividualPerformance/Settings/MetricItem';
@@ -18,6 +18,7 @@ import { Separator } from '@/Components/ui/separator';
 import { Toggle } from '@/Components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Components/ui/tooltip';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 interface Props {
     project?:Project;
     metrics?:IndividualPerformanceMetric[];
@@ -58,6 +59,8 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
   
     }
    const grid = 8;
+   const [loading,setLoading] = useState(false);
+   const Icon = loading?Loader2:CircleCheckBig;
    const axios = require('axios');
    const [editable, setEditable] = useState(false);
    const handleToggleEditable = () => {
@@ -65,11 +68,12 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
     if(!editable){ toast.message('Rows are now draggable!');}
    };
    const onSubmit = () => {
+    setLoading(true);
     const href = route('individual_performance_dashboard.save.order');
     axios.post(href,{metrics:metrics})
-    .then((res:any) => { console.log('response: ', res);})
-    .catch((e:any) => {})
-    .finally(() => {})
+    .then((res:any) => { toast.success("Columns reordered successfully")})
+    .catch((e:any) => {toast.error("Error! Something went wrong.")})
+    .finally(() => {setEditable(!editable);  setLoading(false);})
    }
    /*************************************************************************************************/
     return (
@@ -94,33 +98,35 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
                                 {project?`Metrics for ${project.name}`:"Select a project to view metrics"}
                             </p>
                         </div>
-                        <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
-                            <div className='flex-1'>
-                                <Separator/>
-                            </div>
-                            <div className='ml-auto flex items-center gap-x-2'>
-                                <Toggle variant='default' size='sm' onClick={handleToggleEditable}>
-                                    <Pencil size={16}/>
-                                    <small className='m-1'>{!editable? 'Enable' : 'Disable'} Reordering</small>
-                                </Toggle>
-                                <Button onClick={onSubmit} className={editable? 'text-left md:text-right' : 'hidden text-left md:text-right'}  size='sm' variant='ghost'>
-                                  <Save />
-                                  <small className='m-1'>Save Order</small>
-                                </Button>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                        <CircleHelp  className='cursor-pointer float-right opacity-50'/>
-                                        </TooltipTrigger>
-                                        <TooltipContent className='flex items-center gap-x-2'>
-                                            <Info size={16}/>
-                                            <p>Enables/Disables draggable rows to set column position.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
-                        </div>
+                        
                         {!!project&&(
+                            <>
+                            <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
+                                <div className='flex-1'>
+                                    <Separator/>
+                                </div>
+                                <div className='ml-auto flex items-center gap-x-2'>
+                                    <Toggle variant='default' size='sm' onClick={handleToggleEditable}>
+                                        <Pencil size={16}/>
+                                        <small className='m-1'>{!editable? 'Enable' : 'Disable'} Reordering</small>
+                                    </Toggle>
+                                    <Button onClick={onSubmit} className={editable? 'text-left md:text-right' : 'hidden text-left md:text-right'}  size='sm' variant='ghost'>
+                                    <Icon className={cn(loading&&'animate-spin')} />
+                                    <small className='m-1'>Save Order</small>
+                                    </Button>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                            <CircleHelp  className='cursor-pointer float-right opacity-50'/>
+                                            </TooltipTrigger>
+                                            <TooltipContent className='flex items-center gap-x-2'>
+                                                <Info size={16}/>
+                                                <p>Enables draggable rows to set column position.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </div>
                             <DragDropContext onDragEnd={onDragEnd}>
                                 <Table className='flex-1'>
                                     <TableHeader>
@@ -153,6 +159,7 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
                                     </TableBody> */}
                                 </Table>
                             </DragDropContext>
+                            </>
                         )}
                         {!project&&<div className='flex-1 flex items-center justify-center text-muted-foreground'>Select a project to view metrics</div>}
                     </div>                    
