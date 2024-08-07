@@ -13,10 +13,9 @@ interface Props {
     onDelete:(metric:IndividualPerformanceMetric)=>void;
     provided: DraggableProvided;
     snapshot: DraggableStateSnapshot;
-    index:number;
 }
 
-const MetricItem:FC<Props> = ({metric,onEdit,onDelete,provided,snapshot,index}) => {
+const MetricItem:FC<Props> = ({metric,onEdit,onDelete,provided,snapshot}) => {
     const isInSecondsOrMinutes = (unit:string,daily_goal:string) => {
         let parts = daily_goal.split(':');
 
@@ -43,7 +42,7 @@ const MetricItem:FC<Props> = ({metric,onEdit,onDelete,provided,snapshot,index}) 
       });
     return (
         <TableRow  ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}  key={metric.id}>
-            <TableCell>{index}</TableCell>
+            <TableCell>{`${metric.position}`}</TableCell>
             <TableCell className="font-medium">{metric.metric_name}</TableCell>
             <TableCell>{`${metric.user.first_name} ${metric.user.last_name}`}</TableCell>
             <TableCell className='capitalize'>{`${metric.format}`}</TableCell>

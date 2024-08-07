@@ -1,7 +1,7 @@
 import Header from '@/Components/Header';
 import Layout from '@/Components/Layout/Layout';
 import { Head, usePage } from '@inertiajs/inertia-react';
-import React, {FC, useState} from 'react';
+import React, {FC, useEffect, useState} from 'react';
 import IPDDropdown from './IndividualPerformance/IPDDropdown';
 import { PageProps, Project } from '@/types';
 import { Inertia, Page } from '@inertiajs/inertia';
@@ -26,24 +26,27 @@ interface Props {
 
 const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
     const {projects} = usePage<Page<PageProps>>().props;
+    const [metricsState , setMetricState] = useState(metrics);
+    useEffect(() => {setMetricState(metrics); }, [metrics]);
+    
     const navigate = (selectedProject:Project) =>Inertia.get(route('individual_performance_dashboard.settings',{project_id:selectedProject.id}));
     const [metricModal, setMetricModal] = useState({
         isOpen:false,
         metric: undefined as IndividualPerformanceMetric|undefined
     });
     const [deleteMetricModal, setDeleteMetricModal] = useState<IndividualPerformanceMetric|undefined>();
-
     const handleMetricModal = (metric?:IndividualPerformanceMetric) => setMetricModal({isOpen:true,metric});
     
     /*Drag and Drop Additional************************************************************************/
-    const reorder = (list:(IndividualPerformanceMetric[]|undefined), startIndex:number, endIndex:number): IndividualPerformanceMetric[] => {
+    const reorder = (list:(IndividualPerformanceMetric[]|undefined), startIndex:number, endIndex:number) => {
         if (!list) {
             throw new Error("The list is undefined.");
         }
         const result = Array.from(list);
         const [removed] = result.splice(startIndex, 1);
         result.splice(endIndex, 0, removed);
-        return result;
+        setMetricState(result);
+        // return result;
       };
     
     const onDragEnd = (result: DropResult) => {
@@ -51,12 +54,11 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
         return;
       }
   
-      metrics = reorder(
-        metrics,
+     reorder(
+        metricsState,
         result.source.index,
         result.destination.index
       );
-  
     }
    const grid = 8;
    const [loading,setLoading] = useState(false);
@@ -68,6 +70,8 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
     if(!editable){ toast.message('Rows are now draggable!');}
    };
    const onSubmit = () => {
+
+ 
     setLoading(true);
     const href = route('individual_performance_dashboard.save.order');
     axios.post(href,{metrics:metrics})
@@ -75,6 +79,10 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
     .catch((e:any) => {toast.error("Error! Something went wrong.")})
     .finally(() => {setEditable(!editable);  setLoading(false);})
    }
+
+   useEffect(() => {
+    console.log(metricsState)
+   },[metricsState])
    /*************************************************************************************************/
     return (
         <>
@@ -84,7 +92,8 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
                     <div className='md:relative flex flex-row md:flex-col items-center'>
                         <Header logo='performance'  title="Individual Performance Settings" />                        
                         <IPDDropdown isAdmin isTeamLead project_id={project?.id} className='md:absolute md:right-0 md:top-[0.7rem] !ring-offset-background focus-visible:!outline-none' />
-                    </div>                
+                    </div>       
+                          
                     <div className="flex-1 flex flex-col overflow-y-auto gap-y-3.5">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
                             <div className='flex items-center gap-x-2'>
@@ -143,11 +152,11 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
                                         <Droppable droppableId='droppable'>
                                         {(provided, snapshot) => (
                                             <TableBody ref={provided.innerRef} {...provided.droppableProps}>
-                                                {(metrics||[]).map((metric,index) => {
+                                                {(metricsState||[]).map((metric,index) => {
                                                     metric.position = (index + 1);
                                                     return (
                                                         <Draggable key={metric.id} draggableId={metric.id + ''} index={index} isDragDisabled={!editable}>
-                                                            {(provided, snapshot) => ( <MetricItem index = {index + 1} snapshot={snapshot} provided={provided} key={metric.id} metric={metric} onEdit={handleMetricModal} onDelete={m=>setDeleteMetricModal(m)} /> )}
+                                                            {(provided, snapshot) => ( <MetricItem  snapshot={snapshot} provided={provided} key={metric.id} metric={metric} onEdit={handleMetricModal} onDelete={m=>setDeleteMetricModal(m)} /> )}
                                                         </Draggable>
                                                     )
                                                 })}

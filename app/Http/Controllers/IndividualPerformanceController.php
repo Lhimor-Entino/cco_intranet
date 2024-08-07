@@ -657,14 +657,11 @@ class IndividualPerformanceController extends Controller
     {
         if (!$this->is_admin()) abort(403);
         $metrics = $request['metrics'];
-        $response = [];
         foreach ($metrics as $metric) {
             $data = IndividualPerformanceMetric::findOrFail($metric['id']);
             $data->update(['position' => $metric['position']]);
-            array_push($response,  $data);
         }
-        return response()->json($response);
-        // return redirect()->back();
+        return redirect()->back();
     }
     /*************************************************************************************************/
     public function destroy($metric_id)
