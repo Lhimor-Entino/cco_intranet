@@ -60,10 +60,12 @@ class IndividualPerformanceController extends Controller
             ->when($from && $to, function ($query) use ($from, $to) {
                 $query->whereBetween('date', [$from, $to]);
             })
-            ->where('user_id', $user->id)
+            ->where('individual_performance_user_metrics.user_id', $user->id)
+            /**SORT METRICS BY POSITION IN RENDERING DATASET BARCHART Commented By: JOSH**/
+            ->join('individual_performance_metrics', 'individual_performance_user_metrics.individual_performance_metric_id', '=', 'individual_performance_metrics.id')
+            ->orderBy('individual_performance_metrics.position', 'asc')
             ->get()
             : null;
-
         $agent_averages = null;
         $grouped_metrics = [];
         if (isset($user_metrics)) {
@@ -94,12 +96,14 @@ class IndividualPerformanceController extends Controller
             foreach ($user_metrics as $userMetric) {
                 $metricName = $userMetric->metric->metric_name;
                 $metricIndex = array_search($metricName, array_column($averages, 'metric_name'));
+                $metricPosition = $userMetric->metric->position;
 
                 if ($metricIndex !== false) {
                     $averages[$metricIndex]['total'] += $userMetric->value;
                     $averages[$metricIndex]['days'] += 1;
                 } else {
                     array_push($averages, [
+                        'position' => $metricPosition,
                         'metric_name' => $metricName,
                         'average' => 0,
                         'total' => $userMetric->value,
@@ -108,7 +112,6 @@ class IndividualPerformanceController extends Controller
                     ]);
                 }
             }
-
             foreach ($averages as $key => $average) {
                 $averages[$key]['average'] = $average['total'] / $average['days'];
                 //round to 2 decimal places
@@ -252,6 +255,8 @@ class IndividualPerformanceController extends Controller
                 'users.team_id',
                 'individual_performance_metrics.goal'
             )
+            /**Sorted by metrics position. commented by: JOSH**/
+            ->orderBy('individual_performance_metrics.position', 'asc')
             ->get()
             ->toArray();
 
@@ -312,6 +317,8 @@ class IndividualPerformanceController extends Controller
             ->where('a.value', '>', 0)
             ->whereBetween('a.date', [$from, $to])
             ->groupBy('c.company_id', 'c.first_name', 'c.last_name', 'b.metric_name', 'b.id', 'b.goal')
+            /**Sorted by metrics position. commented by: JOSH**/
+            ->orderBy('b.position', 'asc')
             ->get();
 
         $top_performers = [];
@@ -482,6 +489,8 @@ class IndividualPerformanceController extends Controller
                 'users.project_id',
                 'individual_performance_metrics.goal'
             )
+            /**Sorted by metrics position. commented by: JOSH**/
+            ->orderBy('individual_performance_metrics.position', 'asc')
             ->get()
             ->toArray();
 
@@ -502,8 +511,10 @@ class IndividualPerformanceController extends Controller
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
             ->where('individual_performance_user_metrics.value', '>', 0)
             ->groupBy('individual_performance_user_metrics.date', 'individual_performance_user_metrics.individual_performance_metric_id', 'individual_performance_metrics.goal')
-            ->orderBy('individual_performance_user_metrics.individual_performance_metric_id')
-            ->orderBy('individual_performance_user_metrics.date')
+            // ->orderBy('individual_performance_user_metrics.individual_performance_metric_id')
+            // ->orderBy('individual_performance_user_metrics.date')
+            /**Sorted by metrics position. commented by: JOSH**/
+            ->orderBy('individual_performance_metrics.position', 'asc')
             ->get()
             ->groupBy('individual_performance_metric_id')
             ->map(function ($metricData, $metricId) {
@@ -542,6 +553,8 @@ class IndividualPerformanceController extends Controller
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
             ->where('a.value', '>', 0)
             ->groupBy('c.company_id', 'c.first_name', 'c.last_name', 'b.metric_name', 'b.id', 'b.goal')
+            /**Sorted by metrics position. commented by: JOSH**/
+            ->orderBy('b.position', 'asc')
             ->get();
 
         $top_performers = [];

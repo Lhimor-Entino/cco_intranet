@@ -62,7 +62,8 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
 
         //return a toast if a score from formData is 0 and not_applicable is false
         const hasZeroScore = formData.some(data=>data.score===0 && !data.not_applicable);
-        if(hasZeroScore) return toast.error('Please make sure a score is not zero. Tick N/A if not applicable instead')
+        /**Suggested to allow input 0 in rating agent Commented By: Josh**/
+        // if(hasZeroScore) return toast.error('Please make sure a score is not zero. Tick N/A if not applicable instead')
 
         setLoading(true);
         axios.post(route('individual_performance_dashboard.agent.save_rating'),{
