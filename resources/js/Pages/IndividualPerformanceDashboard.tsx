@@ -3,17 +3,17 @@ import Layout from '@/Components/Layout/Layout';
 import { PageProps, Project, User } from '@/types';
 import { Inertia, Page } from '@inertiajs/inertia';
 import { Head, usePage } from '@inertiajs/inertia-react';
-import { FC, useState, useMemo, MouseEventHandler, MouseEvent } from 'react';
+import { FC, useState, useMemo, MouseEventHandler, MouseEvent, useEffect } from 'react';
 import IPDDropdown from './IndividualPerformance/IPDDropdown';
 import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionComboBox';
 import UserSelectionComboBox from './IndividualPerformance/UserSelectionComboBox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, parseDateRange } from '@/lib/utils';
 import {  CalendarIcon,  Edit,  ExpandIcon,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
-import { DateRange } from 'react-day-picker';
+import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
 import { IndividualPerformanceMetric, IndividualPerformanceUserMetric } from '@/types/metric';
 import { toast } from 'sonner';
 import UserMetricCardItem from './IndividualPerformance/Dashboard/UserMetricCardItem';
@@ -59,18 +59,19 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
     const {user} = auth;
     const isSelf = user.id === agent?.id;
     const [selectedUser,setSelectedUser] = useState<User|undefined>(agent);
-    const [date, setDate] = useState<DateRange | undefined>(date_range);
+    const [initialDate, setDate] = useState<DateRange | undefined>(date_range);
+
     const navigate = () => {
         if(!project) return toast.error('Please select a project');
         if(!selectedUser) return toast.error('Please select an agent');
-        if(!date) return toast.error('Please select a date range or pick a date');
+        if(!initialDate) return toast.error('Please select a date range or pick a date');
+        const date = parseDateRange(initialDate);
         Inertia.get(route('individual_performance_dashboard.index',{
             project_id:project.id,
             date,
             company_id:selectedUser.company_id
         }));
     };
-
     
     const onProjectSelect = (project:Project) => Inertia.get(route('individual_performance_dashboard.index',{project_id:project.id}));
     
@@ -96,7 +97,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
         setShowRateAgentsModal(()=>{
             setMetricToEdit({
                 agent:selectedUser,
-                date:date?.from,
+                date:initialDate?.from,
                 ratings:metric.metrics.map(({metric,value,id})=>({
                     user_metric_id:id,
                     metric,
@@ -176,18 +177,18 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                             variant={"outline"}
                                             className={cn(
                                             "w-60 justify-start text-left font-normal",
-                                            !date && "text-muted-foreground"
+                                            !initialDate && "text-muted-foreground"
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date?.from ? (
-                                                date.to ? (
+                                            {initialDate?.from ? (
+                                                initialDate.to ? (
                                                     <>
-                                                    {format(date.from, "LLL dd, y")} -{" "}
-                                                    {format(date.to, "LLL dd, y")}
+                                                    {format(initialDate.from, "LLL dd, y")} -{" "}
+                                                    {format(initialDate.to, "LLL dd, y")}
                                                     </>
                                                 ) : (
-                                                    format(date.from, "LLL dd, y")
+                                                    format(initialDate.from, "LLL dd, y")
                                                 )
                                                 ) : (
                                                 <span className='text-xs'>Select date range or Pick a Date</span>
@@ -198,8 +199,8 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                     <Calendar
                                         initialFocus
                                         mode="range"
-                                        defaultMonth={date?.from}
-                                        selected={date}
+                                        defaultMonth={initialDate?.from}
+                                        selected={initialDate}
                                         onSelect={setDate}
                                         numberOfMonths={1}
                                     />

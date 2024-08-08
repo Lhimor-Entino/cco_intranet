@@ -80,9 +80,6 @@ const IndividualPerformanceSettings:FC<Props> = ({metrics,project}) => {
     .finally(() => {setEditable(!editable);  setLoading(false);})
    }
 
-   useEffect(() => {
-    console.log(metricsState)
-   },[metricsState])
    /*************************************************************************************************/
     return (
         <>

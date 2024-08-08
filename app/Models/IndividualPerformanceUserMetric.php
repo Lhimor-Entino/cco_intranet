@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class IndividualPerformanceUserMetric extends Model
 {
     use HasFactory;
-    protected $guarded=[];
+    protected $guarded = [];
 
-    public function metric(){
-        return $this->belongsTo(IndividualPerformanceMetric::class,'individual_performance_metric_id');
+    public function metric()
+    {
+        return $this->belongsTo(IndividualPerformanceMetric::class, 'individual_performance_metric_id');
     }
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 }

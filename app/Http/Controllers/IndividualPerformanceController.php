@@ -43,9 +43,9 @@ class IndividualPerformanceController extends Controller
         //abort 403 if $this->is_admin() is false and $this->is_team_lead() is true and $user->project_id is not the same as $my_project_id
         if (!$this->is_admin() && $this->is_team_lead() && isset($project_id) && $project_id != $my_project_id) abort(403);
 
-
+        /**Prevent Adding Day Commented by Josh*/
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
-        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->addDay()->format('Y-m-d') : $from;
+        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
 
         if (!$from) {
             //set $from to first day of previous month, set $to to last day of previous month
@@ -145,8 +145,9 @@ class IndividualPerformanceController extends Controller
         }
 
         if ($user->team_id != $team_id && !$this->is_admin()) abort(403, 'This account is not assigned to this team. Please contact your administrator.');
+        /**Prevent Adding Day Commented by Josh*/
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
-        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->addDay()->format('Y-m-d') : $from;
+        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
         if (!$from) {
             //set $from to first day of previous month, set $to to last day of previous month
             $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
@@ -373,8 +374,10 @@ class IndividualPerformanceController extends Controller
         }
 
         if ($user->project_id != $project_id && !$this->is_admin()) abort(403, 'This account is not assigned to this Project. Please contact your administrator.');
+        /**Prevent Adding Day Commented by Josh*/
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
-        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->addDay()->format('Y-m-d') : $from;
+        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
+
         if (!$from) {
             //set $from to first day of previous month, set $to to last day of previous month
             $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');

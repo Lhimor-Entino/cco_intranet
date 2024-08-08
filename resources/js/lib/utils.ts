@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx"
+import { DateRange } from "react-day-picker";
 import { twMerge } from "tailwind-merge"
 import {utils,writeFile} from 'xlsx';
 export function cn(...inputs: ClassValue[]) {
@@ -58,4 +59,15 @@ export function minutesToHHMMSS(minutes:number) {
   const formattedSeconds = secondsPart.toString().padStart(2, '0');
 
   return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+}
+
+export const parseDateRange = (d:DateRange | undefined):{from:string | null; to: string | null} => {
+  const from = new Date(d?.from + '').toLocaleDateString();
+  const to = d?.to ? new Date(d?.to + '').toLocaleDateString() : null;
+  const formatDate = (dateStr: string | null) => {
+      if(!dateStr){return null}
+      const [month, day, year] = dateStr.split('/');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    };
+  return {from:formatDate(from), to: formatDate(to)};
 }

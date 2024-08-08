@@ -19,7 +19,7 @@ class CreateIndividualPerformanceMetricsTable extends Migration
             $table->unsignedBigInteger('user_id')->index(); //creator
             $table->string('metric_name');
             $table->integer('goal')->default(0);
-            $table->enum('format',[
+            $table->enum('format', [
                 'number',
                 'percentage',
                 'duration',
@@ -28,6 +28,7 @@ class CreateIndividualPerformanceMetricsTable extends Migration
             $table->string('unit')->nullable();
             //if enum is rate
             $table->string('rate_unit')->nullable();
+            $table->string('position')->default(0);
             $table->timestamps();
 
             $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
