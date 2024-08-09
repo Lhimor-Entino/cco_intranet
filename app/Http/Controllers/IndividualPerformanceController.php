@@ -103,6 +103,7 @@ class IndividualPerformanceController extends Controller
                     $averages[$metricIndex]['days'] += 1;
                 } else {
                     array_push($averages, [
+                        'unit' => $userMetric->unit,
                         'position' => $metricPosition,
                         'metric_name' => $metricName,
                         'average' => 0,
@@ -114,8 +115,23 @@ class IndividualPerformanceController extends Controller
             }
             foreach ($averages as $key => $average) {
                 $averages[$key]['average'] = $average['total'] / $average['days'];
-                //round to 2 decimal places
+                //round to 2 decimal places 
                 $averages[$key]['average'] = round($averages[$key]['average'], 2);
+                /**
+                 * CONVERT GOAL VALUE INTO RESPECTIVE UNIT Commented by: JOSH
+                 * Note: Since duration format is saved as minutes.
+                 **/
+
+                switch ($averages[$key]['unit']) {
+                    case 'Seconds':
+                        $averages[$key]['goal'] =  $averages[$key]['goal'] * 60;
+                        break;
+                    case 'Hours':
+                        $averages[$key]['goal'] =  $averages[$key]['goal'] / 60;
+                        break;
+                    default:
+                        break;
+                }
             }
 
             $agent_averages = $averages;

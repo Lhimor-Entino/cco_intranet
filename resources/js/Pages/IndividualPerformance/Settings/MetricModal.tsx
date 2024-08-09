@@ -75,7 +75,8 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
         const val = e.target.value;
         if(val === '' || !val) return setData('goal',0);
         e.target.value = e.target.value.replace(/^0+(?=\d)/,'');
-        const num = (data.format === 'duration'? parseInt(val) : parseFloat(val));
+        // const num = (data.format === 'duration'? parseInt(val) : parseFloat(val));
+        const num = parseFloat(val);
         if(isNaN(num)) return;
         setData('goal',num);
     }

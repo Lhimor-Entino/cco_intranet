@@ -71,3 +71,20 @@ export const parseDateRange = (d:DateRange | undefined):{from:string | null; to:
     };
   return {from:formatDate(from), to: formatDate(to)};
 }
+
+export const isInSecondsOrMinutes = (unit:string,daily_goal:string) => {
+  let parts = daily_goal.split(':');
+  // Assuming the time string is always in the format HH:MM:SS
+  let hours = parseInt(parts[0], 10) || 0;
+  let minutes = parseInt(parts[1], 10) || 0;
+  let seconds = parseInt(parts[2], 10) || 0;
+  
+  let totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  
+  let totalMinutes = minutes % 60 === 0? (hours * 60) : minutes;
+ 
+  if(unit ==="Minutes") return totalMinutes;
+  if(unit ==="Seconds") return totalSeconds
+
+  return 0;
+}
