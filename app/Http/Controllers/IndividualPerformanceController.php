@@ -71,10 +71,12 @@ class IndividualPerformanceController extends Controller
         if (isset($user_metrics)) {
             foreach ($user_metrics as $metric) {
                 $date = Carbon::parse($metric['date'])->format('Y-m-d');
+                $metric['goal'] = self::UnitConversion(["unit" => $metric['unit'], "value" => $metric['goal']]);
                 $found = false;
 
                 foreach ($grouped_metrics as &$group) {
                     if ($group['date'] === $date) {
+                        $metric['goal'] = self::UnitConversion(["unit" => $metric['unit'], "value" => $metric['goal']]);
                         $group['metrics'][] = $metric;
                         $found = true;
                         break;
@@ -89,49 +91,36 @@ class IndividualPerformanceController extends Controller
                 }
             }
         }
-
         if (isset($user_metrics)) {
             $averages = [];
-
             foreach ($user_metrics as $userMetric) {
                 $metricName = $userMetric->metric->metric_name;
                 $metricIndex = array_search($metricName, array_column($averages, 'metric_name'));
                 $metricPosition = $userMetric->metric->position;
-
-                if ($metricIndex !== false) {
+                /**This modification doesn't accumulate no. of days & total if metric is not applicable. Commented By: JOSH**/
+                if ($metricIndex !== false && $userMetric['is_applicable'] > 0) {
                     $averages[$metricIndex]['total'] += $userMetric->value;
                     $averages[$metricIndex]['days'] += 1;
                 } else {
-                    array_push($averages, [
-                        'unit' => $userMetric->unit,
-                        'position' => $metricPosition,
-                        'metric_name' => $metricName,
-                        'average' => 0,
-                        'total' => $userMetric->value,
-                        'days' => 1,
-                        'goal' => $userMetric->metric->goal
-                    ]);
+                    /**This modification excludes not applicable metrics in user. Commented By: JOSH**/
+                    if ($userMetric['is_applicable'] > 0) {
+                        array_push($averages, [
+                            'unit' => $userMetric->unit,
+                            'position' => $metricPosition,
+                            'metric_name' => $metricName,
+                            'average' => 0,
+                            'total' => $userMetric->value,
+                            'days' => 1,
+                            'goal' => $userMetric->metric->goal
+                        ]);
+                    }
                 }
             }
             foreach ($averages as $key => $average) {
                 $averages[$key]['average'] = $average['total'] / $average['days'];
                 //round to 2 decimal places 
                 $averages[$key]['average'] = round($averages[$key]['average'], 2);
-                /**
-                 * CONVERT GOAL VALUE INTO RESPECTIVE UNIT Commented by: JOSH
-                 * Note: Since duration format is saved as minutes.
-                 **/
-
-                switch ($averages[$key]['unit']) {
-                    case 'Seconds':
-                        $averages[$key]['goal'] =  $averages[$key]['goal'] * 60;
-                        break;
-                    case 'Hours':
-                        $averages[$key]['goal'] =  $averages[$key]['goal'] / 60;
-                        break;
-                    default:
-                        break;
-                }
+                $averages[$key]['goal'] =  self::UnitConversion(["unit" => $averages[$key]['unit'], "value" => $averages[$key]['goal']]);
             }
 
             $agent_averages = $averages;
@@ -152,7 +141,25 @@ class IndividualPerformanceController extends Controller
             'grouped_metrics' => $grouped_metrics,
         ]);
     }
-
+    /**
+     * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
+     * Note: Since duration format is saved as minutes.
+     **/
+    public function UnitConversion($data)
+    {
+        $result  = $data['value'];
+        switch ($data['unit']) {
+            case 'Seconds':
+                $result =  $data['value'] * 60;
+                break;
+            case 'Hours':
+                $result =  $data['value'] / 60;
+                break;
+            default:
+                break;
+        }
+        return $result;
+    }
     public function team(Request $request, $team_id = null)
     {
         $user = Auth::user();
@@ -247,6 +254,7 @@ class IndividualPerformanceController extends Controller
             'metric_name as Metric',
             'team_id',
             'individual_performance_metrics.goal as Goal',
+            'individual_performance_metrics.unit as Unit',
             DB::raw('COUNT(*) as Days'),
             DB::raw('SUM(value) as Total'),
             DB::raw('ROUND(SUM(value)/COUNT(*),2) as Average')
@@ -276,6 +284,13 @@ class IndividualPerformanceController extends Controller
             ->get()
             ->toArray();
 
+        /**
+         * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
+         * Note: Since duration format is saved as minutes.
+         **/
+        foreach ($breakdown as $index => $data) {
+            $breakdown[$index]['Goal'] = self::UnitConversion(["unit" => $data['Unit'], "value" =>  $breakdown[$index]['Goal']]);
+        }
 
 
 
@@ -283,6 +298,7 @@ class IndividualPerformanceController extends Controller
             'individual_performance_user_metrics.individual_performance_metric_id',
             'individual_performance_metrics.metric_name',
             'individual_performance_metrics.goal as goal',
+            'individual_performance_metrics.unit as unit',
             DB::raw('DATE(individual_performance_user_metrics.date) as date'),
             DB::raw('SUM(individual_performance_user_metrics.value) as total'),
             DB::raw('ROUND(SUM(individual_performance_user_metrics.value)/COUNT(*), 2) as average')
@@ -293,6 +309,7 @@ class IndividualPerformanceController extends Controller
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
             ->where('individual_performance_user_metrics.value', '>', 0)
             ->groupBy('individual_performance_user_metrics.date', 'individual_performance_user_metrics.individual_performance_metric_id', 'individual_performance_metrics.goal')
+            ->orderBy('individual_performance_metrics.position', 'asc')
             ->orderBy('individual_performance_user_metrics.individual_performance_metric_id')
             ->orderBy('individual_performance_user_metrics.date')
             ->get()
@@ -302,7 +319,7 @@ class IndividualPerformanceController extends Controller
                     'individual_performance_metric_id' => $metricId,
                     'metric_name' => $metricData->first()->metric_name,
 
-                    'goal' => $metricData->first()->goal,
+                    'goal' => self::UnitConversion(["unit" => $metricData->first()->unit, "value" => $metricData->first()->goal]), //$metricData->first()->goal,
                     'trends' => $metricData->map(function ($dateData) {
                         return [
                             'date' => $dateData->date,
@@ -476,11 +493,13 @@ class IndividualPerformanceController extends Controller
             }
         }
 
+
         $breakdown = IndividualPerformanceUserMetric::select(
             'individual_performance_metric_id',
             'metric_name as Metric',
             'users.project_id',
             'individual_performance_metrics.goal as Goal',
+            'individual_performance_metrics.unit as Unit',
             DB::raw('COUNT(*) as Days'),
             DB::raw('SUM(value) as Total'),
             DB::raw('ROUND(SUM(value)/COUNT(*),2) as Average')
@@ -509,7 +528,13 @@ class IndividualPerformanceController extends Controller
             ->orderBy('individual_performance_metrics.position', 'asc')
             ->get()
             ->toArray();
-
+        /**
+         * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
+         * Note: Since duration format is saved as minutes.
+         **/
+        foreach ($breakdown as $index => $data) {
+            $breakdown[$index]['Goal'] = self::UnitConversion(["unit" => $data['Unit'], "value" => floatval($data['Goal'])]);
+        }
 
 
 
@@ -517,6 +542,7 @@ class IndividualPerformanceController extends Controller
             'individual_performance_user_metrics.individual_performance_metric_id',
             'individual_performance_metrics.metric_name',
             'individual_performance_metrics.goal as goal',
+            'individual_performance_metrics.unit as unit',
             DB::raw('DATE(individual_performance_user_metrics.date) as date'),
             DB::raw('SUM(individual_performance_user_metrics.value) as total'),
             DB::raw('ROUND(SUM(individual_performance_user_metrics.value)/COUNT(*), 2) as average')
@@ -538,7 +564,7 @@ class IndividualPerformanceController extends Controller
                     'individual_performance_metric_id' => $metricId,
                     'metric_name' => $metricData->first()->metric_name,
 
-                    'goal' => $metricData->first()->goal,
+                    'goal' => self::UnitConversion(["unit" => $metricData->first()->unit, "value" => $metricData->first()->goal]), //$metricData->first()->goal,
                     'trends' => $metricData->map(function ($dateData) {
                         return [
                             'date' => $dateData->date,
@@ -753,16 +779,24 @@ class IndividualPerformanceController extends Controller
         */
         DB::transaction(function () use ($date, $user_ratings, $user_id) {
             foreach ($user_ratings as $rating) {
+                $payload = [
+                    "metric_id" => $rating['metric_id'],
+                    "user_id" => $user_id,
+                    "date" => $date
+                ];
+                $rating['user_metric_id'] = $rating['user_metric_id'] > 0 ? $rating['user_metric_id'] : self::CheckUserMetric($payload);
                 if ($rating['user_metric_id'] == 0) {
                     IndividualPerformanceUserMetric::create([
                         'individual_performance_metric_id' => $rating['metric_id'],
                         'user_id' => $user_id,
                         'value' => !$rating['not_applicable'] ? $rating['score'] : 0,
+                        'is_applicable' => !$rating['not_applicable'] ? 1 : 0,
                         'date' => $date
                     ]);
                 } else {
                     $user_metric = IndividualPerformanceUserMetric::findOrFail($rating['user_metric_id']);
                     $user_metric->update([
+                        'is_applicable' => !$rating['not_applicable'] ? 1 : 0,
                         'value' => !$rating['not_applicable'] ? $rating['score'] : 0,
                     ]);
                 }
@@ -770,7 +804,16 @@ class IndividualPerformanceController extends Controller
         });
         return redirect()->back();
     }
-
+    /**Check User Rate Exist Commented by: JOSH**/
+    public function CheckUserMetric($payload): int
+    {
+        $isExist = IndividualPerformanceUserMetric::where('individual_performance_metric_id', $payload['metric_id'])
+            ->where('user_id', $payload['user_id'])
+            ->where('date', $payload['date'])
+            ->pluck('id')
+            ->first();
+        return $isExist ?? 0;
+    }
 
     private function is_admin(): bool
     {

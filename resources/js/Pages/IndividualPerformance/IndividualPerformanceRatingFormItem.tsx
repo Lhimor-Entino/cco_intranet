@@ -39,11 +39,12 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
     const {stage, shouldMount} = useTransition(isVisible(), 300) // (state, timeout)  
     const [formData, setFormData] = useState<formDataType[]>(metrics.map(metric=>{
         const userMetric = agent.user_metrics.find(um=>um.individual_performance_metric_id === metric.id);
+        console.log('metric: ', userMetric);
         return {
             metric_id:metric.id,
             user_metric_id:userMetric?.id ?? 0,
             score:userMetric?.value ?? 0,
-            not_applicable:userMetric?.value === 0,
+            not_applicable:userMetric?.is_applicable == 0,
             metric
         }
     }));
@@ -96,21 +97,21 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
                         </div>
                     </TableCell>
                     {formData.map(metric=>(
-                        <TableCell key={metric.metric_id} >
-                            <div className='flex items-center'>
-                                <div className='relative'>                                
-                                    <Input type="number" autoComplete='off' id={`{item-${metric.metric_id.toString()}}`} disabled={loading||metric.not_applicable} className='[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-64 text-left rounded-r-none' placeholder='0' value={metric.score} onChange={e=>{ e.target.value = e.target.value.replace(/^0+(?=\d)/,''); return handleChange(metric.metric_id,e.target.value)}} />
-                                    <label htmlFor={`{item-${metric.metric_id.toString()}}`} className={cn('top-2.5 right-2.5 text-muted-foreground italic text-xs absolute transition duration-300',metric.not_applicable && 'opacity-50')}>
-                                        {metric.metric.unit}
-                                        {metric.metric.format==='rate' && metric.metric.rate_unit && ` per ${metric.metric.rate_unit}`}
-                                    </label>
+                            <TableCell key={metric.metric_id} >
+                                <div className='flex items-center'>
+                                    <div className='relative'>                                
+                                        <Input type="number" autoComplete='off' id={`{item-${metric.metric_id.toString()}}`} disabled={loading||metric.not_applicable} className='[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none h-9 w-64 text-left rounded-r-none' placeholder='0' value={metric.score} onChange={e=>{ e.target.value = e.target.value.replace(/^0+(?=\d)/,''); return handleChange(metric.metric_id,e.target.value)}} />
+                                        <label htmlFor={`{item-${metric.metric_id.toString()}}`} className={cn('top-2.5 right-2.5 text-muted-foreground italic text-xs absolute transition duration-300',metric.not_applicable && 'opacity-50')}>
+                                            {metric.metric.unit}
+                                            {metric.metric.format==='rate' && metric.metric.rate_unit && ` per ${metric.metric.rate_unit}`}
+                                        </label>
+                                    </div>
+                                    <Button  tabIndex={-1} onClick={handleNotApplicable(metric.metric_id)} size='sm' className='rounded-l-none' variant={metric.not_applicable?'outline':'info'}>
+                                        N/A
+                                    </Button>
                                 </div>
-                                <Button  tabIndex={-1} onClick={handleNotApplicable(metric.metric_id)} size='sm' className='rounded-l-none' variant={metric.not_applicable?'outline':'info'}>
-                                    N/A
-                                </Button>
-                            </div>
-                        </TableCell>
-                    ))}
+                            </TableCell>
+                        ))}
                     <TableCell className='flex items-center justify-end'>
                         <Button disabled={loading} onClick={onSubmit} size='icon_sm'>
                             <Icon className={cn(loading&&'animate-spin')} />

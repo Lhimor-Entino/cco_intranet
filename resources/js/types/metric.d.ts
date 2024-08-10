@@ -27,6 +27,7 @@ export interface IndividualPerformanceUserMetric extends TimeStamp {
     user_id:number;
     value:number;
     date:string;
+    is_applicable:number;
 
     metric:IndividualPerformanceMetric;
     user:User;
