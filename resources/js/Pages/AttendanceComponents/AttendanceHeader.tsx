@@ -1,5 +1,6 @@
 import { Button } from "@/Components/ui/button";
 import { Calendar } from "@/Components/ui/calendar";
+import { Command, CommandGroup } from "@/Components/ui/command";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/Components/ui/dialog";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/Components/ui/dropdown-menu";
 import { Input } from "@/Components/ui/input";
@@ -7,11 +8,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { useAttendanceReportModal } from "@/Hooks/useAttendanceReportModal";
 import { cn } from "@/lib/utils";
-import { PageProps } from "@/types";
+import { PageProps, User } from "@/types";
 import { Inertia, Page } from "@inertiajs/inertia";
 import { usePage } from "@inertiajs/inertia-react";
 import { addDays, addYears, format } from "date-fns";
-import {  CalendarClockIcon, CalendarIcon, FileSpreadsheet, GanttChart, RefreshCw, SearchIcon, SlidersHorizontal, UserIcon, XIcon } from "lucide-react";
+import {  CalendarClockIcon, CalendarIcon, Check, ChevronsUpDownIcon, FileSpreadsheet, GanttChart, RefreshCw, SearchIcon, SlidersHorizontal, UserIcon, XIcon } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { toast } from "sonner";
@@ -26,13 +27,23 @@ interface Props {
     onProjectFilter:(project_id:string)=>void;
     projectFilterIds:string[];
     resetProjectFilter:()=>void;
+    employees: User[] | undefined;
+    setHead: (new_head: number) => void;
+    head: number;
 }
 
-const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter,showDashboard,showDashboardToggle,onProjectFilter,projectFilterIds,resetProjectFilter}) => {
+const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter,showDashboard,showDashboardToggle,onProjectFilter,projectFilterIds,resetProjectFilter,employees,setHead,head}) => {
     const {shifts,projects} = usePage<Page<PageProps>>().props;
     const [showDateModal,setShowDateModal] = useState(false);
     const {user} = usePage<Page<PageProps>>().props.auth;
     const {onOpen} = useAttendanceReportModal();
+    const [filter,setFilter] = useState<string>('');
+    const [open, setOpen] = useState(false)
+    const filteredEmployees = (employees || []).filter(employee=>{
+        if(filter === '') return true;
+        return employee.first_name.toLowerCase().includes(filter.toLowerCase()) || employee.last_name.toLowerCase().includes(filter.toLowerCase());
+    });
+    const selectedHead = (employees || []).filter(employee => employee.id === head)[0];
     return (
         <>
             <div className="flex items-center justify-between gap-x-2 h-auto">
@@ -58,6 +69,62 @@ const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
+                            <Popover open={open} onOpenChange={setOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={open}
+                                    className="w-50 justify-between"
+                                    disabled={false}
+                                    >
+                                    {head
+                                        ? `${selectedHead.first_name} ${selectedHead.last_name}`
+                                        : "Filter Supervisor/Head..."}
+                                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 max-h-72">
+                                    <Command>
+                                        <Input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search Supervisor/Head..." />
+                                        
+                                        <CommandGroup>
+                                            {head > 0 && (<Button 
+                                                onClick={() => setHead(0)}
+                                                className='w-full fkex items-center justify-start'
+                                                variant='ghost'
+                                                size='sm'> 
+                                                <XIcon className="h-4 w-4 mr-2" />
+                                                Clear Filter
+
+                                            </Button>)}
+
+                                            {(filteredEmployees || []).map((employee) => (
+                                                <Button
+                                                    key={employee.id}
+                                                    onClick={() => {
+                                                        setHead(employee.id);
+                                                        setOpen(false);
+                                                    }}
+                                                    className='w-full fkex items-center justify-start'
+                                                    variant='ghost'
+                                                    size='sm'
+                                                >
+                                            
+                                                    <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        (head === employee.id) ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                    />
+                                                    {`${employee.first_name} ${employee.last_name}`}
+                                                
+                                                </Button>
+                                            ))}
+                                        </CommandGroup>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </>
                     ):(
                         <div className="text-lg font-semibold tracking-wide">
@@ -86,6 +153,7 @@ const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter
                         <GanttChart className="h-4 w-4 mr-2" />
                         {showDashboard?'Show Attendance Table':'Show Dashboard'}
                     </Button>
+                    
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -106,7 +174,6 @@ const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter
                         </DropdownMenuGroup>   
                     </DropdownMenuContent>
                 </DropdownMenu>
-                
             </div>
             <DateModal isOpen={showDateModal} onClose={()=>setShowDateModal(false)} />
         </>

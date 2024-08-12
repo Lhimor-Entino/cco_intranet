@@ -15,6 +15,8 @@ import UpdateAttendanceModal from './AttendanceComponents/UpdateAttendanceModal'
 import AttendanceDashboard from './AttendanceComponents/AttendanceDashboard';
 import { useLocalStorage } from 'usehooks-ts';
 import { useAttendanceDate } from './AttendanceComponents/AttendanceHooks.ts/useAttendanceDate';
+import { truncateByDomain } from 'recharts/types/util/ChartUtils';
+
 
 const getAttendances = async (search:string) => axios.post(route('api.attendances'),{search}).then((res:{data:User[]}) => res.data);
 
@@ -30,21 +32,61 @@ const Attendance:FC<Props> = ({dt}) => {
     const onInputChange = (e:ChangeEvent<HTMLInputElement>) => setStrFilter(e.target.value);
     const [projectFilterIds,setProjectFilterIds] = useState<string[]>([]);
     const {setAttendanceDate} = useAttendanceDate();
-    const filteredEmployees = useMemo(()=>data?.filter((employee) => {
-        if(strFilter === '') return true;
-        return employee.company_id.toLowerCase().includes(strFilter.toLocaleLowerCase()) || employee.last_name.toLowerCase().includes(strFilter.toLowerCase());        
-    }).filter(employee=>{
-        if(shiftFilter === 'all') return true;
-        if((shiftFilter && employee.shift_id) && employee.shift_id.toString() === shiftFilter) return true;
-        if(shiftFilter === '0') return !employee.shift_id;
-        if(!shiftFilter) return true;
-    }).filter(({project_id})=>{
-        if(projectFilterIds.length === 0 ) return true;
-        if(projectFilterIds.length>0){
-            if(!project_id) return false;
-            return projectFilterIds.includes(project_id.toString());
+    const [head,setHead] = useState(0);
+    const updateParentHead = (head:number) => setHead(head);
+    /** OLD FILTER Commented By: JOSH**/
+    const filteredEmployees = useMemo(() => {
+        if (!data) return [];
+        
+        // Filter by head first if applicable
+        let result = head > 0 
+            ? data.filter(employee => employee.user_id === head)
+            : data;
+    
+        // Apply other filters if head filter isn't limiting
+        if (strFilter !== '') {
+            const lowerStrFilter = strFilter.toLowerCase();
+            result = result.filter(employee =>
+                employee.company_id.toLowerCase().includes(lowerStrFilter) ||
+                (employee.first_name + ' ' + employee.last_name).toLowerCase().includes(lowerStrFilter)
+            );
         }
-    }),[data,strFilter,shiftFilter,projectFilterIds]);
+    
+        if (shiftFilter !== 'all') {
+            result = result.filter(employee => {
+                if (shiftFilter === '0') return !employee.shift_id;
+                if (!shiftFilter) return true;
+                return employee.shift_id && employee.shift_id.toString() === shiftFilter;
+            });
+        }
+    
+        if (projectFilterIds.length > 0) {
+            result = result.filter(({ project_id }) => {
+                if (!project_id) return false;
+                return projectFilterIds.includes(project_id.toString());
+            });
+        }
+    
+        return result;
+    }, [data, head, strFilter, shiftFilter, projectFilterIds]);
+    
+    /** OLD FILTER**/
+    // const filteredEmployees = useMemo(()=>data?.filter((employee) => {
+    //     if(head > 0) return employee.user_id === head;
+    //     if(strFilter === '') return true;
+    //     return employee.company_id.toLowerCase().includes(strFilter.toLocaleLowerCase()) || employee.last_name.toLowerCase().includes(strFilter.toLowerCase());        
+    // }).filter(employee=>{
+    //     if(shiftFilter === 'all') return true;
+    //     if((shiftFilter && employee.shift_id) && employee.shift_id.toString() === shiftFilter) return true;
+    //     if(shiftFilter === '0') return !employee.shift_id;
+    //     if(!shiftFilter) return true;
+    // }).filter(({project_id})=>{
+    //     if(projectFilterIds.length === 0 ) return true;
+    //     if(projectFilterIds.length>0){
+    //         if(!project_id) return false;
+    //         return projectFilterIds.includes(project_id.toString());
+    //     }
+    // }),[data,strFilter,shiftFilter,projectFilterIds]);
 
     const onProjectFilter = (project_id:string) => {
         if(projectFilterIds.includes(project_id)) return setProjectFilterIds(val=>val.filter(id=>id!==project_id));
@@ -66,7 +108,7 @@ const Attendance:FC<Props> = ({dt}) => {
     return (
         <>
             <Head title="Attendance" />
-            <Layout title={`Daily Attendance - ${zonedDate}`}>
+            <Layout title={`Daily Attendance - ${zonedDate} - ${head}`}>
                 <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container py-2.5'>
                     
                     {
@@ -87,7 +129,7 @@ const Attendance:FC<Props> = ({dt}) => {
                             </div>
                         )
                     }
-                    {!isLoading&&<AttendanceHeader resetProjectFilter={()=>setProjectFilterIds([])} onProjectFilter={onProjectFilter} projectFilterIds={projectFilterIds} showDashboard={showDashboard} showDashboardToggle={()=>setShowDashboard(val=>!val)} onInputChange={onInputChange} onShiftChange={e=>setShiftFilter(e)} strFilter={strFilter} shift={shiftFilter} />}
+                    {!isLoading&&<AttendanceHeader resetProjectFilter={()=>setProjectFilterIds([])} onProjectFilter={onProjectFilter} projectFilterIds={projectFilterIds} showDashboard={showDashboard} showDashboardToggle={()=>setShowDashboard(val=>!val)} onInputChange={onInputChange} onShiftChange={e=>setShiftFilter(e)} strFilter={strFilter} shift={shiftFilter} employees={data} setHead={updateParentHead} head={head} />}
                     {
                         !isLoading  && filteredEmployees && !showDashboard && (
                             <div className='flex-1 overflow-y-hidden'>

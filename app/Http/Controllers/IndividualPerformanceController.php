@@ -76,7 +76,6 @@ class IndividualPerformanceController extends Controller
 
                 foreach ($grouped_metrics as &$group) {
                     if ($group['date'] === $date) {
-                        $metric['goal'] = self::UnitConversion(["unit" => $metric['unit'], "value" => $metric['goal']]);
                         $group['metrics'][] = $metric;
                         $found = true;
                         break;
@@ -710,6 +709,7 @@ class IndividualPerformanceController extends Controller
         ]);
         return redirect()->back();
     }
+
     /**JOSH - ADDED SAVE COLUMN REODERING*************************************************************/
     public function order(Request $request)
     {
@@ -784,6 +784,7 @@ class IndividualPerformanceController extends Controller
                     "user_id" => $user_id,
                     "date" => $date
                 ];
+                /**Check User Rate Exist Commented by: JOSH**/
                 $rating['user_metric_id'] = $rating['user_metric_id'] > 0 ? $rating['user_metric_id'] : self::CheckUserMetric($payload);
                 if ($rating['user_metric_id'] == 0) {
                     IndividualPerformanceUserMetric::create([
@@ -804,6 +805,7 @@ class IndividualPerformanceController extends Controller
         });
         return redirect()->back();
     }
+
     /**Check User Rate Exist Commented by: JOSH**/
     public function CheckUserMetric($payload): int
     {
