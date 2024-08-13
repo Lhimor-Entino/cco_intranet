@@ -20,7 +20,7 @@ import UserMetricCardItem from './IndividualPerformance/Dashboard/UserMetricCard
 import { Separator } from '@/Components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/Components/ui/accordion';
 import Hint from '@/Components/Hint';
-import { Bar, BarChart, CartesianGrid, Legend, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, LabelList, Legend, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import RateAgentsModal, { RateAgentsForm } from './IndividualPerformance/Dashboard/RateAgentsModal';
 import TrendsPanel from './IndividualPerformance/Dashboard/TrendsPanel';
 
@@ -31,6 +31,7 @@ export type UserMetricAverage = {
     total:number;
     days:number;
     goal:number; 
+    unit:string;
 }
 
 export type Trend = {
@@ -82,10 +83,12 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
     const onShrinkAll = () => setOpened([]);
     const onExpandAll = () => setOpened((grouped_metrics||[]).map(({date})=>(date)));
     const onSetOpened = (dates:string[]) => setOpened(dates);
-    const chartData = useMemo(()=>(agent_averages||[]).map(({metric_name,average,goal})=>({
+    const chartData = useMemo(()=>(agent_averages||[]).map(({metric_name,average,goal,unit})=>({
         Metric:metric_name,
         Average:average,
-        Goal:goal===0?undefined:goal
+        Goal:goal===0?undefined:goal,
+        LabelAve: average === 0 ? undefined : average + (unit === '%'?  unit : ''),
+        LabelGoal: goal === 0 ? undefined : goal + (unit === '%'?  unit : '')
     })),[agent_averages]);
     const [showRateAgentsModal,setShowRateAgentsModal] = useState(false);
     const [metricToEdit,setMetricToEdit] = useState<RateAgentsForm|undefined>(undefined);
@@ -226,8 +229,16 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                                     <XAxis className='text-xs' dataKey="Metric" />
                                                     <Tooltip labelClassName='text-slate-900 font-semibold' />
                                                     <Legend />
-                                                    <Bar radius={[4, 4, 0, 0]} label dataKey="Average" fill="#ec4899" activeBar={<Rectangle fill="#db2777" stroke="#be185d" />} />
-                                                    {totalGoals!==0&&<Bar radius={[4, 4, 0, 0]} label dataKey="Goal" fill="#3b82f6" activeBar={<Rectangle fill="#2563eb" stroke="#1d4ed8" />} />}
+                                                    <Bar radius={[4, 4, 0, 0]}  dataKey="Average" fill="#ec4899" activeBar={<Rectangle fill="#db2777" stroke="#be185d" />} >
+                                                       <LabelList
+                                                            dataKey="LabelAve"
+                                                        />
+                                                    </Bar>
+                                                    {totalGoals!==0&&<Bar radius={[4, 4, 0, 0]}   dataKey="Goal" fill="#3b82f6" activeBar={<Rectangle fill="#2563eb" stroke="#1d4ed8" />} >
+                                                        <LabelList
+                                                            dataKey="LabelGoal"
+                                                        />
+                                                    </Bar>}
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </AccordionContent>

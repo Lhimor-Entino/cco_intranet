@@ -53,7 +53,9 @@ export type BreakDown = {
     Days:number,
     Total:number,
     Average:number,
-    Goal:number
+    Goal:number,
+    Unit:string
+
 };
 
 
