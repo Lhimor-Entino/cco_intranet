@@ -37,7 +37,7 @@ const TeamsComboBox:FC<Props> = ({teams,selectedTeam,onTeamSelect,disabled,size=
             </PopoverTrigger>
             <PopoverContent className="p-0 w-[640px]" align='end' side='bottom'>
                 <Command>
-                    <CommandInput placeholder="Search Project..." />
+                    <CommandInput placeholder="Search Team..." />
                     <CommandList>
                         <CommandEmpty>No User found.</CommandEmpty>
                         <CommandGroup>

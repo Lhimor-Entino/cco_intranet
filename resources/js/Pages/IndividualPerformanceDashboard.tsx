@@ -10,7 +10,7 @@ import UserSelectionComboBox from './IndividualPerformance/UserSelectionComboBox
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
 import { cn, parseDateRange } from '@/lib/utils';
-import {  CalendarIcon,  Edit,  ExpandIcon,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
+import {  BarChartBig, BetweenHorizontalStart, CalendarIcon,  Edit,  ExpandIcon,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
@@ -23,6 +23,7 @@ import Hint from '@/Components/Hint';
 import { Bar, BarChart, CartesianGrid, LabelList, Legend, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import RateAgentsModal, { RateAgentsForm } from './IndividualPerformance/Dashboard/RateAgentsModal';
 import TrendsPanel from './IndividualPerformance/Dashboard/TrendsPanel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
 type UserMetricGroup = {date:string,metrics:IndividualPerformanceUserMetric[]}
 export type UserMetricAverage = {
@@ -223,6 +224,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                             {`${!isSelf?'Agent':'My'}`} Averages from {format(date_range.from,'PP')} to {format(date_range.to,'PP')}
                                         </AccordionTrigger>
                                         <AccordionContent asChild>
+                                            {((chartData || []).length > 0? 
                                             <ResponsiveContainer height={400} width={'100%'}>
                                                 <BarChart data={chartData}>
                                                     <CartesianGrid stroke='#64748b' strokeDasharray="3 3" />
@@ -230,17 +232,25 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                                     <Tooltip labelClassName='text-slate-900 font-semibold' />
                                                     <Legend />
                                                     <Bar radius={[4, 4, 0, 0]}  dataKey="Average" fill="#ec4899" activeBar={<Rectangle fill="#db2777" stroke="#be185d" />} >
-                                                       <LabelList
-                                                            dataKey="LabelAve"
-                                                        />
+                                                    <LabelList dataKey="LabelAve" />
                                                     </Bar>
-                                                    {totalGoals!==0&&<Bar radius={[4, 4, 0, 0]}   dataKey="Goal" fill="#3b82f6" activeBar={<Rectangle fill="#2563eb" stroke="#1d4ed8" />} >
-                                                        <LabelList
-                                                            dataKey="LabelGoal"
-                                                        />
+                                                        {totalGoals!==0&&<Bar radius={[4, 4, 0, 0]}   dataKey="Goal" fill="#3b82f6" activeBar={<Rectangle fill="#2563eb" stroke="#1d4ed8" />} >
+                                                        <LabelList dataKey="LabelGoal"/>
                                                     </Bar>}
                                                 </BarChart>
                                             </ResponsiveContainer>
+                                            :
+                                            <Card className='border border-dashed'>
+                                                <div className='opacity-50'>
+                                                    <CardHeader className='flex items-center justify-center'>
+                                                    <BarChartBig size={50} />
+                                                    </CardHeader>
+                                                    <CardContent className="h-[60%] flex items-center justify-center">
+                                                        <CardTitle>No Content Available</CardTitle>
+                                                    </CardContent>
+                                                </div>
+                                            </Card>
+                                            )}
                                         </AccordionContent>
                                     </AccordionItem>                                      
                                 </Accordion>
@@ -250,13 +260,89 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                             {`${!isSelf?'Agent':'My'}`} Daily Trends from {format(date_range.from,'PP')} to {format(date_range.to,'PP')}
                                         </AccordionTrigger>
                                         <AccordionContent asChild>
-                                            <TrendsPanel trends={trends} />
+                                            {((trends || []).length > 0? 
+                                                <TrendsPanel trends={trends} />
+                                                :
+                                                <Card className='border border-dashed'>
+                                                    <div className='opacity-50'>
+                                                        <CardHeader className='flex items-center justify-center'>
+                                                        <BarChartBig size={50} />
+                                                        </CardHeader>
+                                                        <CardContent className="h-[60%] flex items-center justify-center">
+                                                            <CardTitle>No Content Available</CardTitle>
+                                                        </CardContent>
+                                                    </div>
+                                                </Card>
+                                            )}
+                                            
+                                        </AccordionContent>
+                                    </AccordionItem>                                      
+                                </Accordion>
+                                <Accordion  defaultValue='daily-breakdown' type='single' collapsible className="w-full">                                    
+                                    <AccordionItem value='daily-breakdown'>
+                                        <div className=' flex-1  flex flex-col gap-y-2.5 overflow-y-auto'>
+                                            <div className='h-auto flex items-center justify-between'>
+                                                <Button variant="link" className=' p-0 m-0 flex items-start justify-start text-lg text-left font-bold tracking-tight flex-1'>
+                                                    <h3 className='text-lg text-left font-bold'>
+                                                        {`${!isSelf?agentName:'My'} Performance - ${format(date_range.from,'LLL dd, y')}`}
+                                                        {!!date_range.to && ` to ${format(date_range.to,'LLL dd, y')}`}
+                                                    </h3>
+                                                </Button>
+                                                <div className='ml-auto flex'>
+                                                    <Button size='sm' variant='outline' className='border-r-0 rounded-r-none' onClick={onShrinkAll}>
+                                                        <ShrinkIcon className='h-5 w-5' />
+                                                        <span className='ml-2 hidden md:inline'>Shrink All</span>
+                                                    </Button>
+                                                    <Button size='sm' variant='outline' className='rounded-l-none' onClick={onExpandAll}>
+                                                        <span className='mr-2 hidden md:inline'>Expand All</span>
+                                                        <ExpandIcon className='h-5 w-5' />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                      
+                                        <AccordionContent asChild>
+                                            {( !!agent && !!date_range?.from && grouped_metrics && grouped_metrics.length > 1 ?
+                                                <Accordion  type="multiple" value={opened} onValueChange={onSetOpened} className="w-full">
+                                                    {grouped_metrics.map(group=>(                                        
+                                                        <AccordionItem key={group.date} value={group.date}>
+                                                            <AccordionTrigger className='text-lg flex items-center justify-between group'>
+                                                                <div className='flex items-center gap-x-2'>
+                                                                    <span>{group.date}</span>
+                                                                    {(is_admin||is_team_leader)&&(<Hint label='Edit Agent Metric'>
+                                                                        <p role='button' className=' opacity-0 group-hover:opacity-100 transition duration-300' onClick={e=>onSetMetricToEdit(group,e)}>
+                                                                            <Edit className='h-5 w-5 text-primary' />
+                                                                        </p>
+                                                                    </Hint>)}
+                                                                </div>
+                                                            </AccordionTrigger>
+                                                            <AccordionContent asChild>
+                                                                <div className='gap-5 flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+                                                                    {group.metrics.map(userMetric=>  <UserMetricCardItem agent={agent} key={userMetric.id}   userMetric={userMetric} />)}
+                                                                </div>  
+                                                            </AccordionContent>
+                                                        </AccordionItem>
+                                                    ))}                                        
+                                                </Accordion>
+                                                :
+                                                <Card className='border border-dashed'>
+                                                    <div className='opacity-50'>
+                                                        <CardHeader className='flex items-center justify-center'>
+                                                        <BetweenHorizontalStart size={50} />
+                                                        </CardHeader>
+                                                        <CardContent className="h-[60%] flex items-center justify-center">
+                                                            <CardTitle>No Content Available</CardTitle>
+                                                        </CardContent>
+                                                    </div>
+                                                </Card>
+                                            )}
                                         </AccordionContent>
                                     </AccordionItem>                                      
                                 </Accordion>
                             </div>
                         )}
-                        <div className='flex-1  flex flex-col gap-y-2.5 overflow-y-auto'>
+                        {/*This Content was modified into top because of unresponsiveness*/}
+                        {/* <div className='flex-1  flex flex-col gap-y-2.5 overflow-y-auto'>
                             { !!agent && !!date_range?.from && grouped_metrics && grouped_metrics.length>1 &&(
                                 <>
                                     <div className='h-auto flex items-center justify-between'>
@@ -300,7 +386,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                     </div>
                                 </>
                             )}
-                        </div>
+                        </div> */}
                     </div>                    
                 </div>
             </Layout>

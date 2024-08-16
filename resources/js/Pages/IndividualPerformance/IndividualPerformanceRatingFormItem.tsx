@@ -39,7 +39,7 @@ const IndividualPerformanceRatingFormItem= ({metrics,agent,hideSaved=false,date,
     const {stage, shouldMount} = useTransition(isVisible(), 300) // (state, timeout)  
     const [formData, setFormData] = useState<formDataType[]>(metrics.map(metric=>{
         const userMetric = agent.user_metrics.find(um=>um.individual_performance_metric_id === metric.id);
-        console.log('metric: ', userMetric);
+       
         return {
             metric_id:metric.id,
             user_metric_id:userMetric?.id ?? 0,

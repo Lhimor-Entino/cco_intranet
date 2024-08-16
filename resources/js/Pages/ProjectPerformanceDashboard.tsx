@@ -13,7 +13,7 @@ import { Popover, PopoverContent } from '@/Components/ui/popover';
 import { PopoverTrigger } from '@radix-ui/react-popover';
 import { Button } from '@/Components/ui/button';
 import { cn, parseDateRange } from '@/lib/utils';
-import {  CalendarIcon, SquareArrowRightIcon } from 'lucide-react';
+import {  BarChartBig, BetweenHorizontalStart, CalendarIcon, SquareArrowRightIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/Components/ui/accordion';
@@ -21,6 +21,7 @@ import { Bar, BarChart, CartesianGrid, Legend, Rectangle, ResponsiveContainer, T
 import TrendsPanel from './IndividualPerformance/Dashboard/TrendsPanel';
 import TopPerformers from './IndividualPerformance/Dashboard/TopPerformers';
 import AverageBarChart from './IndividualPerformance/Dashboard/AverageBarChart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
 interface Props {
     is_team_leader:boolean;
@@ -121,7 +122,20 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                                     {`${!ownProject?project.name:"My Project"}'s`} Averages from {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
-                                                    <AverageBarChart breakdown={breakdown} />
+                                                    {((breakdown || []).length > 0? 
+                                                        <AverageBarChart breakdown={breakdown} />
+                                                        :
+                                                        <Card className='border border-dashed'>
+                                                            <div className='opacity-50'>
+                                                                <CardHeader className='flex items-center justify-center'>
+                                                                 <BarChartBig size={50} />
+                                                                </CardHeader>
+                                                                <CardContent className="h-[60%] flex items-center justify-center">
+                                                                    <CardTitle>No Content Available</CardTitle>
+                                                                </CardContent>
+                                                            </div>
+                                                        </Card>
+                                                    )}
                                                 </AccordionContent>
                                             </AccordionItem>
                                             <AccordionItem value='trends'>
@@ -129,7 +143,21 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                                     {`${ownProject?"My Project":project.name}'s`} Average Daily Trends from {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
-                                                    <TrendsPanel trends={formattedTrends} />
+                                                    {( (formattedTrends || []).length > 0? 
+                                                        <TrendsPanel trends={formattedTrends} />
+                                                        :
+                                                        <Card className='border border-dashed'>
+                                                            <div className='opacity-50'>
+                                                                <CardHeader className='flex items-center justify-center'>
+                                                                 <BarChartBig size={50} />
+                                                                </CardHeader>
+                                                                <CardContent className="h-[60%] flex items-center justify-center">
+                                                                    <CardTitle>No Content Available</CardTitle>
+                                                                </CardContent>
+                                                            </div>
+                                                    </Card>
+                                                    )}
+                                                    
                                                 </AccordionContent>
                                             </AccordionItem>
                                             <AccordionItem value='tops'>
@@ -137,7 +165,21 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                                     {`${ownProject?"My Team":project.name}'s`} Top Performers {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
-                                                    <TopPerformers topPerformers={top_performers} />
+                                                    {((top_performers || []).length > 0? 
+                                                        <TopPerformers topPerformers={top_performers} />
+                                                        :
+                                                        <Card className='border border-dashed'>
+                                                            <div className='opacity-50'>
+                                                                <CardHeader className='flex items-center justify-center'>
+                                                                 <BetweenHorizontalStart size={50} />
+                                                                </CardHeader>
+                                                                <CardContent className="h-[60%] flex items-center justify-center">
+                                                                    <CardTitle>No Content Available</CardTitle>
+                                                                </CardContent>
+                                                            </div>
+                                                    </Card>
+                                                    )}
+                                                    
                                                 </AccordionContent>
                                             </AccordionItem>
                                         </Accordion>

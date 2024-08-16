@@ -45,12 +45,12 @@ const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,proj
                 <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container pb-2.5'>
                     <div className='md:relative flex flex-row md:flex-col items-center'>
                         <Header logo='performance'  title="Individual Performance Ratings Page" />                        
-                        <IPDDropdown isAdmin isTeamLead project_id={project?.id} className='md:absolute md:right-0 md:top-[0.7rem] !ring-offset-background focus-visible:!outline-none' />
+                        <IPDDropdown isAdmin={is_admin} isTeamLead project_id={project?.id} className='md:absolute md:right-0 md:top-[0.7rem] !ring-offset-background focus-visible:!outline-none' />
                     </div>                
                     <div className="flex-1 flex flex-col overflow-auto gap-y-3.5">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
                             <div className='flex items-center gap-x-2'>
-                                <ProjectSelectionComboBox isAdmin projects={projects} selectedProject={project} onSelectProject={navigate} />
+                                <ProjectSelectionComboBox isAdmin={is_admin} projects={projects} selectedProject={project} onSelectProject={navigate} />
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button

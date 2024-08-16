@@ -48,9 +48,12 @@ class IndividualPerformanceController extends Controller
         $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
 
         if (!$from) {
+            /**UPDATE - Instead of setting default by previous month set it into current month. commented By JOSH*/
             //set $from to first day of previous month, set $to to last day of previous month
-            $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
-            $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+            // $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
+            // $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+            $from = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $to = Carbon::now()->endOfMonth()->format('Y-m-d');
         }
 
         $user_metrics = $user ? IndividualPerformanceUserMetric::with(['metric'])
@@ -159,24 +162,54 @@ class IndividualPerformanceController extends Controller
         }
         return $result;
     }
+    public function hasNoTeamContent($user)
+    {
+        $team = ["id" => 0, "name" => "(No Team) " . $user->last_name, "user" => $user, "user_id" => $user->id];
+        $from = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = Carbon::now()->endOfMonth()->format('Y-m-d');
+        return Inertia::render('TeamPerformanceDashboard', [
+            'is_admin' => $this->is_admin(),
+            'is_team_leader' => $this->is_team_lead(),
+            'date_range' => [
+                'from' => $from,
+                'to' => $to
+            ],
+            'team' => $team,
+            'teams' => [$team],
+            'agents' => [],
+            'user_breakdown' => [],
+            'breakdown' => [],
+            'team_trends' => [],
+            'top_performers' => []
+        ]);
+    }
     public function team(Request $request, $team_id = null)
     {
         $user = Auth::user();
-        $team = !$team_id ? Team::first() : Team::where('id', $team_id)->firstOrFail();
+        $team = !$team_id ? Team::firstOrFail() : Team::where('id', $team_id)->firstOrFail();
+
         if (!$team_id) {
             if (isset($user->team_id)) return redirect()->route('individual_performance_dashboard.team', ['team_id' => $user->team_id]);
             if ($this->is_admin() && !isset($user->team_id)) return redirect()->route('individual_performance_dashboard.team', ['team_id' => $team->id]);
+            if ($this->is_team_lead() && !isset($user->team_id)) {
+                $team_id = Team::select('id')->where('user_id', $user->id)->pluck('id')->first() ?? 0;
+
+                return $team_id <= 0 ? self::hasNoTeamContent($user) : redirect()->route('individual_performance_dashboard.team', ['team_id' => $team_id]);
+            }
             abort(403, 'This account is not assigned to any team. Please contact your administrator.');
         }
 
-        if ($user->team_id != $team_id && !$this->is_admin()) abort(403, 'This account is not assigned to this team. Please contact your administrator.');
+        if ($user->team_id != $team_id && !$this->is_admin() && !$this->is_team_lead()) abort(403, 'This account is not assigned to this team. Please contact your administrator.');
         /**Prevent Adding Day Commented by Josh*/
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
         $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
         if (!$from) {
             //set $from to first day of previous month, set $to to last day of previous month
-            $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
-            $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+            /**UPDATE - Instead of setting default by previous month set it into current month. commented By JOSH*/
+            // $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
+            // $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+            $from = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $to = Carbon::now()->endOfMonth()->format('Y-m-d');
         }
         $users = User::where('team_id', $team->id)->get();
 
@@ -381,8 +414,16 @@ class IndividualPerformanceController extends Controller
             $top_performer['top_five_performers'] = array_slice($top_performer['top_five_performers'], 0, 5);
         }
 
-
-
+        if ($this->is_team_lead()) {
+            $current_user = Auth::user();
+            $teams = Team::where('user_id', $current_user->id)
+                ->orWhere(function ($query) use ($current_user) {
+                    if (isset($current_user->team_id)) {
+                        $query->where('id', $current_user->team_id);
+                    }
+                })
+                ->get();
+        }
 
 
         return Inertia::render('TeamPerformanceDashboard', [
@@ -393,7 +434,7 @@ class IndividualPerformanceController extends Controller
                 'to' => $to
             ],
             'team' => $team,
-            'teams' => $this->is_admin() ? Team::all() : [$team],
+            'teams' => $this->is_admin() ? Team::all() : ($this->is_team_lead() ? $teams : [$team]),
             'agents' => $users,
             'user_breakdown' => $user_breakdown,
             'breakdown' => $breakdown,
@@ -418,9 +459,12 @@ class IndividualPerformanceController extends Controller
         $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
 
         if (!$from) {
+            /**UPDATE - Instead of setting default by previous month set it into current month. commented By JOSH*/
             //set $from to first day of previous month, set $to to last day of previous month
-            $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
-            $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+            // $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
+            // $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
+            $from = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $to = Carbon::now()->endOfMonth()->format('Y-m-d');
         }
         $users = User::where('project_id', $project->id)->get();
 
