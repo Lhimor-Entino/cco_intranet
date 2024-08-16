@@ -19,7 +19,7 @@
                 $table->unsignedBigInteger('user_id')->index();
                 $table->integer('value');
                 $table->date('date');
-                $table->smallInteger('is_appilcable');
+                $table->smallInteger('is_appilcable')->default(1);
                 $table->timestamps();
 
                 $table->foreign('individual_performance_metric_id', 'metric_id')->references('id')->on('individual_performance_metrics')->onDelete('cascade');

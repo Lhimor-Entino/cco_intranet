@@ -15,21 +15,21 @@ class TeamController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($team_id=null)
+    public function index($team_id = null)
     {
-        if(!$team_id) {
-            $first_team_id = Team::first()->id;
-            if(!$first_team_id) return redirect()->route('hrms.auto_create_teams');
-            return redirect()->route('team.index',['team_id'=>$first_team_id]);
-        } 
+        if (!$team_id) {
+            $first_team_id = Team::first()->id ?? 0;
+            if (!$first_team_id) return redirect()->route('hrms.auto_create_teams');
+            return redirect()->route('team.index', ['team_id' => $first_team_id]);
+        }
         $team = Team::with(['users'])->findOrFail($team_id);
-        $team_leads = User::where('position','like','%lead%')->get();
+        $team_leads = User::where('position', 'like', '%lead%')->get();
         $teamless_agents = User::whereNull('team_id')->where('position', 'not like', '%lead%')->get();
-        return Inertia::render('TeamSettings',[
-            'team'=>$team,
-            'team_leads'=>$team_leads,
-            'teams'=>Team::all(),
-            'teamless_agents'=>$teamless_agents,
+        return Inertia::render('TeamSettings', [
+            'team' => $team,
+            'team_leads' => $team_leads,
+            'teams' => Team::all(),
+            'teamless_agents' => $teamless_agents,
         ]);
     }
 
@@ -52,8 +52,8 @@ class TeamController extends Controller
     public function store(Request $request)
     {
         Team::create([
-            'name'=>trim($request->name),
-            'user_id'=>$request->user_id
+            'name' => trim($request->name),
+            'user_id' => $request->user_id
         ]);
         return redirect()->back();
     }
@@ -66,7 +66,7 @@ class TeamController extends Controller
      */
     public function show($id)
     {
-        return User::where('team_id',$id)->get();
+        return User::where('team_id', $id)->get();
     }
 
     /**
@@ -89,10 +89,10 @@ class TeamController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $team=Team::findOrFail($id);
+        $team = Team::findOrFail($id);
         $team->update([
-            'name'=>trim($request->name),
-            'user_id'=>$request->user_id
+            'name' => trim($request->name),
+            'user_id' => $request->user_id
         ]);
         return redirect()->back();
     }
@@ -106,19 +106,19 @@ class TeamController extends Controller
     public function destroy($id)
     {
         Team::findOrFail($id)->delete();
-        return redirect()->route('team.index',['team_id'=>Team::first()->id]);
+        return redirect()->route('team.index', ['team_id' => Team::first()->id]);
     }
 
-    public function transfer(Request $request,$team_id)
+    public function transfer(Request $request, $team_id)
     {
         $user = User::findOrFail($request->user['id']);
         $user->update([
-            'team_id'=>$team_id
+            'team_id' => $team_id
         ]);
         TeamHistory::create([
-            'team_id'=>$team_id,
-            'user_id'=>$request->user['id'],
-            'start_date'=>now()
+            'team_id' => $team_id,
+            'user_id' => $request->user['id'],
+            'start_date' => now()
         ]);
         return redirect()->back();
     }
@@ -127,12 +127,12 @@ class TeamController extends Controller
     {
         $user = User::findOrFail($request->user_id);
         $user->update([
-            'team_id'=>null
+            'team_id' => null
         ]);
         TeamHistory::create([
-            'team_id'=>null,
-            'user_id'=>$request->user_id,
-            'start_date'=>now()
+            'team_id' => null,
+            'user_id' => $request->user_id,
+            'start_date' => now()
         ]);
         return redirect()->back();
     }
