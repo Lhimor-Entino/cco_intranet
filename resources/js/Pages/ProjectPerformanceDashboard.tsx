@@ -28,6 +28,7 @@ interface Props {
     is_admin:boolean;
     date_range?:DateRange;
     projects:Project[];
+    project_histories: Project[];
     project:Project;
     breakdown:BreakDown[];
     user_metrics :IndividualPerformanceUserMetric[];
@@ -35,7 +36,7 @@ interface Props {
     top_performers: TopPerformer[];
 }
 
-const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,projects,project, breakdown,project_trends,top_performers}) => {
+const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,projects,project, breakdown,project_trends,top_performers,project_histories}) => {
     const {user} = usePage<Page<PageProps>>().props.auth;
     const [date, setDate] = useState<DateRange | undefined>(date_range);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.project',{project_id:t.id}));
@@ -67,7 +68,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                     </div>
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
-                            <ProjectSelectionComboBox projects={projects} selectedProject={project} isAdmin={is_admin} onSelectProject={navigate} />
+                            <ProjectSelectionComboBox projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} isAdmin={is_admin || is_team_leader} onSelectProject={navigate} />
                             <div className='flex items-center'>
                                 <Popover>
                                     <PopoverTrigger asChild>

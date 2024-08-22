@@ -9,6 +9,7 @@ import { PageProps, Project } from '@/types';
 import { IndividualPerformanceMetric, MetricFormat } from '@/types/metric';
 import { Page } from '@inertiajs/inertia';
 import { useForm, usePage } from '@inertiajs/inertia-react';
+import { round } from 'lodash';
 import { Loader2 } from 'lucide-react';
 import {ChangeEventHandler, FC, FormEventHandler, useEffect, useState} from 'react';
 import { toast } from 'sonner';
@@ -49,9 +50,9 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
             if($request->format=='duration' && $request->unit=='Seconds') $duration = $request->goal/60;
             */
             const goal = () => {
-                if(metric.format === 'duration' && metric.unit === 'Minutes') return metric.goal;
-                if(metric.format === 'duration' && metric.unit === 'Hours') return metric.goal/60;
-                if(metric.format === 'duration' && metric.unit === 'Seconds') return metric.goal*60;
+                if(metric.format === 'duration' && metric.unit === 'Minutes') return round(metric.goal,2);
+                if(metric.format === 'duration' && metric.unit === 'Hours') return round(metric.goal/60,2);
+                if(metric.format === 'duration' && metric.unit === 'Seconds') return round(metric.goal*60);
                 return metric.goal;
             }
             setData(val=>({
@@ -124,7 +125,7 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
                 if(val.format === 'duration' && e === 'Minutes' && val.unit==='Hours') return val.goal*60.00;
                 //from hours to seconds
                 if(val.format === 'duration' && e === 'Seconds' && val.unit==='Hours') return val.goal*3600.00;
-                return val.goal;
+                return round(val.goal);
             }
             return {...val,goal:goal(),unit:e};
         });

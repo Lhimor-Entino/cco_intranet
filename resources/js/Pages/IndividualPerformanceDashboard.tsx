@@ -9,7 +9,7 @@ import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionCo
 import UserSelectionComboBox from './IndividualPerformance/UserSelectionComboBox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
-import { cn, parseDateRange } from '@/lib/utils';
+import { cn, parseDateRange, roundWithFormat } from '@/lib/utils';
 import {  BarChartBig, BetweenHorizontalStart, CalendarIcon,  Edit,  ExpandIcon,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
@@ -24,6 +24,8 @@ import { Bar, BarChart, CartesianGrid, LabelList, Legend, Rectangle, ResponsiveC
 import RateAgentsModal, { RateAgentsForm } from './IndividualPerformance/Dashboard/RateAgentsModal';
 import TrendsPanel from './IndividualPerformance/Dashboard/TrendsPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import { round } from 'lodash';
+
 
 type UserMetricGroup = {date:string,metrics:IndividualPerformanceUserMetric[]}
 export type UserMetricAverage = {
@@ -49,6 +51,7 @@ interface Props {
     is_admin:boolean;
     is_team_leader:boolean;
     project:Project;
+    project_histories: Project[];
     agents:User[];
     date_range?:DateRange;
     agent?:User;
@@ -56,13 +59,12 @@ interface Props {
     grouped_metrics?:UserMetricGroup[];
 }
 
-const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,project,agents,date_range,agent,agent_averages,grouped_metrics}) => {
+const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,project,agents,date_range,agent,agent_averages,grouped_metrics,project_histories}) => {
     const {projects,auth} = usePage<Page<PageProps>>().props;
     const {user} = auth;
     const isSelf = user.id === agent?.id;
     const [selectedUser,setSelectedUser] = useState<User|undefined>(agent);
     const [initialDate, setDate] = useState<DateRange | undefined>(date_range);
-
     const navigate = () => {
         if(!project) return toast.error('Please select a project');
         if(!selectedUser) return toast.error('Please select an agent');
@@ -87,9 +89,9 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
     const chartData = useMemo(()=>(agent_averages||[]).map(({metric_name,average,goal,unit})=>({
         Metric:metric_name,
         Average:average,
-        Goal:goal===0?undefined:goal,
-        LabelAve: average === 0 ? undefined : average + (unit === '%'?  unit : ''),
-        LabelGoal: goal === 0 ? undefined : goal + (unit === '%'?  unit : '')
+        Goal:goal===0?undefined:round(goal,2),
+        LabelAve: average === 0 ? undefined :  (unit === '%'? roundWithFormat(average,2) +  unit : roundWithFormat(average,2)),
+        LabelGoal: goal === 0 ? undefined :   (unit === '%'?  roundWithFormat(goal,2) + unit : roundWithFormat(goal,2))
     })),[agent_averages]);
     const [showRateAgentsModal,setShowRateAgentsModal] = useState(false);
     const [metricToEdit,setMetricToEdit] = useState<RateAgentsForm|undefined>(undefined);
@@ -149,11 +151,11 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
         //get the trends
         return Object.entries(groupedByMetric).map(([metricName,metrics])=>({
             metricName,
-            goal:metrics[0].metric.goal,
+            goal:round(metrics[0].metric.goal,2),
             trends:metrics.map(({id,date,value})=>({
                 userMetricId:id,
                 date,
-                score:value
+                score:round(value,2)
             }))
         }));        
         
@@ -170,7 +172,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                     </div>                
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
-                            <ProjectSelectionComboBox isAdmin={is_admin} projects={projects} selectedProject={project} onSelectProject={onProjectSelect} />
+                            <ProjectSelectionComboBox isAdmin={is_admin || is_team_leader} projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} onSelectProject={onProjectSelect} />
                             <div className='flex items-center gap-x-1.5'>
                                 <UserSelectionComboBox isTeamLead={is_team_leader||is_admin} users={agents} selectedUser={selectedUser} onSelectUser={setSelectedUser} />
                                 <Popover>

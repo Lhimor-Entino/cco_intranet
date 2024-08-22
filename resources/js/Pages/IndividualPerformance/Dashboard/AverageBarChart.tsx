@@ -1,4 +1,6 @@
+import { roundWithFormat } from '@/lib/utils';
 import { BreakDown } from '@/types/metric';
+import { round } from 'lodash';
 import {FC} from 'react';
 import { Bar, BarChart, CartesianGrid, LabelList, Legend, Rectangle, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -12,10 +14,10 @@ const AverageBarChart:FC<Props> = ({breakdown}) => {
 
     const remapped = breakdown.map(bd=>({
         Metric:bd.Metric,
-        Average:bd.Average,
-        Goal:bd.Goal === 0 ? undefined : bd.Goal,
-        LabelAve: bd.Average === 0 ? undefined : bd.Average + (bd.Unit === '%'?  bd.Unit : ''),
-        LabelGoal: bd.Goal === 0 ? undefined : bd.Goal + (bd.Unit === '%'?  bd.Unit : '')
+        Average:round( bd.Average,2),
+        Goal:bd.Goal === 0 ? undefined : round( bd.Goal,2),
+        LabelAve: bd.Average === 0 ? undefined :  (bd.Unit === '%'? roundWithFormat( bd.Average,2) + bd.Unit :  roundWithFormat( bd.Average,2)),
+        LabelGoal: bd.Goal === 0 ? undefined : (bd.Unit === '%'?  roundWithFormat(bd.Goal,2)  + bd.Unit : roundWithFormat(bd.Goal,2) )
     }));
 
     return (

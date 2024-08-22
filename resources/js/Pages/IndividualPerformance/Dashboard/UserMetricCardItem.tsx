@@ -1,10 +1,11 @@
 import Hint from '@/Components/Hint';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Separator } from '@/Components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, roundWithFormat } from '@/lib/utils';
 import { User } from '@/types';
 import { IndividualPerformanceUserMetric } from '@/types/metric';
 import { format } from 'date-fns';
+import { round } from 'lodash';
 import {FC} from 'react';
 
 interface Props {
@@ -32,14 +33,14 @@ const UserMetricCardItem:FC<Props> = ({userMetric,agent}) => {
                         <div className='flex items-center justify-between'>
                             <p>Agent Score:</p>
                             <div className={cn('flex items-center',hasFailed && 'text-destructive')}>
-                                <p>{`${userMetric.value} ${userMetric.metric.unit}`}</p>
+                                <p>{`${userMetric.metric.unit === '%' ? roundWithFormat(userMetric.value,2) : round(userMetric.value)} ${userMetric.metric.unit}`}</p>
                                 {userMetric.metric.format==='rate' && userMetric.metric.rate_unit && <p className='ml-1'>per {userMetric.metric.rate_unit}</p>}
                             </div>
                         </div>
                         <div className='flex items-center justify-between'>
                             <p>Daily Goal:</p>
                             {hasGoal?(<div className='flex items-center'>
-                                <p>{`${userMetric.metric.goal} ${userMetric.metric.unit}`}</p>
+                                <p>{`${userMetric.metric.unit === '%' ? roundWithFormat(userMetric.metric.goal , 2) : round(userMetric.metric.goal)} ${userMetric.metric.unit}`}</p>
                                 {userMetric.metric.format==='rate' && userMetric.metric.rate_unit && <p className='ml-1'>per {userMetric.metric.rate_unit}</p>}
                             </div>):(
                                 <p className='text-muted-foreground'>No Goal Set</p>                        
@@ -85,14 +86,14 @@ const UserMetricHint:FC<UserMetricHintProps> = ({userMetric,agent}) =>{
             <div className='flex items-center justify-between'>
                 <p>Agent Score:</p>
                 <div className={cn('flex items-center',hasFailed && 'text-red-600 dark:text-red-400')}>
-                    <p>{`${userMetric.value} ${userMetric.metric.unit}`}</p>
+                    <p>{`${userMetric.metric.unit === '%'? roundWithFormat(userMetric.value,2) : round(userMetric.value)} ${userMetric.metric.unit}`}</p>
                     {userMetric.metric.format==='rate' && userMetric.metric.rate_unit && <p className='ml-1'>per {userMetric.metric.rate_unit}</p>}
                 </div>
             </div>
             <div className='flex items-center justify-between'>
                 <p>Daily Goal:</p>
                 <div className='flex items-center'>
-                    <p>{`${userMetric.metric.goal} ${userMetric.metric.unit}`}</p>
+                    <p>{`${userMetric.metric.unit === '%' ? roundWithFormat(userMetric.metric.goal,2) : round(userMetric.metric.goal)} ${userMetric.metric.unit}`}</p>
                     {userMetric.metric.format==='rate' && userMetric.metric.rate_unit && <p className='ml-1'>per {userMetric.metric.rate_unit}</p>}
                 </div>
             </div>

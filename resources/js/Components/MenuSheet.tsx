@@ -67,11 +67,10 @@ const MenuSheet:FC<Props> = ({children}) => {
                                             {
                                                 navItem.items.map((item) => {
                                                     /**MODIFICATION: Change default page list if teamleader (From Individual Into Team Performance Dashboard)**/
-                                                       if(isTeamLead(user) && hasTeam(user) && item.href === route('individual_performance_dashboard.index') && item.name === 'Individual Performance Dashboard'){
+                                                       if(isTeamLead(user)  && item.href === route('individual_performance_dashboard.index') && item.name === 'Individual Performance Dashboard'){
                                                             item.href = route('individual_performance_dashboard.team');
                                                             item.name = "Team Performance Dashboard";
                                                        }
-                                                       
                                                     /**END**/
 
                                                     return (

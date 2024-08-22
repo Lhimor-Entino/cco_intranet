@@ -18,7 +18,7 @@ class CreateIndividualPerformanceMetricsTable extends Migration
             $table->unsignedBigInteger('project_id')->index();
             $table->unsignedBigInteger('user_id')->index(); //creator
             $table->string('metric_name');
-            $table->integer('goal')->default(0);
+            $table->decimal('goal', 25, 2)->default(0);
             $table->enum('format', [
                 'number',
                 'percentage',

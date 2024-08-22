@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\IndividualPerformanceMetric;
 use App\Models\IndividualPerformanceUserMetric;
 use App\Models\Project;
+use App\Models\ProjectHistory;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
@@ -22,7 +23,15 @@ class IndividualPerformanceController extends Controller
         $my_company_id = Auth::user()->company_id;
         $agents = $this->is_admin() || $this->is_team_lead() ? User::where('project_id', $project_id)->get() : User::where('project_id', $project_id)->where('id', Auth::id())->get();
         $company_id = $request->company_id;
-        $user = $company_id ? User::where('company_id', $company_id)->where('project_id', $project_id)->firstOrFail() : Auth::user();
+        //return response()->json(['condition' =>  $agents->contains('company_id', $company_id)]);
+        $user = $company_id  ? User::where('company_id', $company_id)->where('project_id', $project_id)->firstOrFail() : Auth::user();
+
+        $project_history = collect(
+            ProjectHistory::join('projects', 'project_histories.project_id', '=', 'projects.id')
+                ->where('project_histories.user_id', Auth::user()->id)
+                ->select('projects.*')->groupBy('projects.id')->get()
+        );
+        $project_id = (int) $project_id;
 
         if (!$project_id) {
             $project_id = $user->project_id;
@@ -32,8 +41,8 @@ class IndividualPerformanceController extends Controller
         };
 
         if (isset($project_id)) {
-            if ($user->project_id != $project_id && !$this->is_admin()) abort(403, 'This account is not assigned to this project. Please contact your administrator.');
-            if ($user->project_id != $project_id && $this->is_admin()) return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_id, 'company_id' => (string)User::where('project_id', $project_id)->firstOrFail()->company_id]);
+            if (!$project_history->contains('id', $project_id) && !$this->is_admin()) abort(403, 'This account is not assigned to this project. Please contact your administrator.');
+            if ($user->project_id != $project_id && ($this->is_admin() || $this->is_team_lead())) return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_id, 'company_id' => (string)User::where('project_id', $project_id)->firstOrFail()->company_id]);
         }
 
 
@@ -41,7 +50,8 @@ class IndividualPerformanceController extends Controller
         if (!$this->is_admin() && !$this->is_team_lead() && isset($company_id) && $company_id != $my_company_id) abort(403);
 
         //abort 403 if $this->is_admin() is false and $this->is_team_lead() is true and $user->project_id is not the same as $my_project_id
-        if (!$this->is_admin() && $this->is_team_lead() && isset($project_id) && $project_id != $my_project_id) abort(403);
+        if (!$this->is_admin() && $this->is_team_lead() && !$project_history->contains('id', $project_id)) abort(403);
+
 
         /**Prevent Adding Day Commented by Josh*/
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
@@ -49,9 +59,6 @@ class IndividualPerformanceController extends Controller
 
         if (!$from) {
             /**UPDATE - Instead of setting default by previous month set it into current month. commented By JOSH*/
-            //set $from to first day of previous month, set $to to last day of previous month
-            // $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
-            // $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
             $from = Carbon::now()->startOfMonth()->format('Y-m-d');
             $to = Carbon::now()->endOfMonth()->format('Y-m-d');
         }
@@ -133,6 +140,7 @@ class IndividualPerformanceController extends Controller
             'is_admin' => $this->is_admin(),
             'is_team_leader' => $this->is_team_lead(),
             'project' => Project::with(['metrics'])->where('id', $project_id)->firstOrFail(),
+            'project_histories' => $project_history,
             'agents' => $agents,
             'date_range' => [
                 'from' => $from,
@@ -453,7 +461,13 @@ class IndividualPerformanceController extends Controller
             abort(403, 'This account is not assigned to any Project. Please contact your administrator.');
         }
 
-        if ($user->project_id != $project_id && !$this->is_admin()) abort(403, 'This account is not assigned to this Project. Please contact your administrator.');
+        $project_history = collect(
+            ProjectHistory::join('projects', 'project_histories.project_id', '=', 'projects.id')
+                ->where('project_histories.user_id', Auth::user()->id)
+                ->select('projects.*')->groupBy('projects.id')->get()
+        );
+
+        if (!$project_history->contains('id', $project_id) && !$this->is_admin()) abort(403, 'This account is not assigned to this Project. Please contact your administrator.');
         /**Prevent Adding Day Commented by Josh*/
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
         $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
@@ -687,6 +701,7 @@ class IndividualPerformanceController extends Controller
             'user_breakdown' => $user_breakdown,
             'breakdown' => $breakdown,
             'project_trends' => $project_trends,
+            'project_histories' => $project_history,
             'top_performers' => array_values($top_performers)
         ]);
     }
@@ -711,15 +726,17 @@ class IndividualPerformanceController extends Controller
             'unit' => 'nullable',
             'rate_unit' => 'nullable'
         ]);
-        $duration = 0;
+        $duration =  0;
         if ($request->format == 'duration' && $request->unit == 'Minutes') $duration = $request->goal;
         if ($request->format == 'duration' && $request->unit == 'Seconds') $duration = $request->goal / 60.00;
         if ($request->format == 'duration' && $request->unit == 'Hours') $duration = $request->goal * 60.00;
+
+        // Set goal with 15 decimal places in order to preserve value precision for accuracy conversion. Commented By Josh
         IndividualPerformanceMetric::create([
             'project_id' => $request->project_id,
             'user_id' => Auth::id(),
             'metric_name' => $request->metric_name,
-            'goal' => !($request->format == 'duration') ? $request->goal : $duration,
+            'goal' => !($request->format == 'duration') ? $request->goal : number_format($duration, 15),
             'format' => $request->format,
             'unit' => $request->unit,
             'rate_unit' => $request->rate_unit
@@ -738,15 +755,16 @@ class IndividualPerformanceController extends Controller
             'unit' => 'nullable',
             'rate_unit' => 'nullable'
         ]);
-        $duration = 0;
+        $duration =  0;
         if ($request->format == 'duration' && $request->unit == 'Minutes') $duration = $request->goal;
         if ($request->format == 'duration' && $request->unit == 'Hours') $duration = $request->goal * 60;
-        if ($request->format == 'duration' && $request->unit == 'Seconds') $duration = $request->goal / 60.00;
+        if ($request->format == 'duration' && $request->unit == 'Seconds') $duration = $request->goal / 60;
 
         $metric = IndividualPerformanceMetric::findOrFail($metric_id);
+        // Set goal with 15 decimal places in order to preserve value precision for accuracy conversion. Commented By Josh
         $metric->update([
             'metric_name' => $request->metric_name,
-            'goal' => $request->format != 'duration' ? $request->goal : $duration,
+            'goal' => $request->format != 'duration' ? $request->goal : $duration, //number_format($duration, 15),
             'format' => $request->format,
             'unit' => $request->unit,
             'rate_unit' => $request->rate_unit

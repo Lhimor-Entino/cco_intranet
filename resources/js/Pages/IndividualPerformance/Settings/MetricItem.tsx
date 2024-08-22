@@ -1,8 +1,8 @@
 import { Button } from '@/Components/ui/button';
 import { TableCell, TableRow } from '@/Components/ui/table';
-import { isInSecondsOrMinutes, minutesToHHMMSS } from '@/lib/utils';
+import { isInSecondsOrMinutes, minutesToHHMMSS, roundWithFormat } from '@/lib/utils';
 import { IndividualPerformanceMetric } from '@/types/metric';
-import { get } from 'lodash';
+import { get, round } from 'lodash';
 import { Grip, PencilIcon, Trash2Icon } from 'lucide-react';
 import {FC} from 'react';
 import { DraggableProvided, DraggableStateSnapshot } from 'react-beautiful-dnd';
@@ -32,7 +32,7 @@ const MetricItem:FC<Props> = ({metric,onEdit,onDelete,provided,snapshot}) => {
             <TableCell className='capitalize'>{`${metric.format}`}</TableCell>
             <TableCell className='capitalize'>{`${metric.unit}`}</TableCell>
             {/* <TableCell>{  parseInt(metric.daily_goal) < 1 ? "No Daily Goal" : metric.daily_goal} {parseInt(metric.daily_goal)} {metric.daily_goal}</TableCell> */}
-            <TableCell>{ metric.unit === "Minutes" || metric.unit ==="Seconds" ?  isInSecondsOrMinutes(metric.unit || "",metric.daily_goal)  < 1 ? "No Daily Goal" : metric.daily_goal : parseFloat(metric.daily_goal) < 1 ? "No Daily Goal" : metric.daily_goal}</TableCell>
+            <TableCell>{ metric.unit === "Minutes" || metric.unit ==="Seconds" ?  isInSecondsOrMinutes(metric.unit || "",metric.daily_goal)  < 1 ? "No Daily Goal" : metric.daily_goal : parseFloat(metric.daily_goal) < 1 ? "No Daily Goal" : metric.format === 'duration' ? metric.daily_goal : roundWithFormat(parseFloat(metric.daily_goal),2)}</TableCell>
             <TableCell className='flex items-center gap-x-2 justify-end'>
                 <Button size='icon' onClick={()=>onEdit(metric)}  variant='secondary'>
                     <PencilIcon />

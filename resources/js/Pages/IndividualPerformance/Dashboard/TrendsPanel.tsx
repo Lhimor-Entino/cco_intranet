@@ -1,5 +1,6 @@
 import { Trend } from '@/Pages/IndividualPerformanceDashboard';
 import { format } from 'date-fns';
+import { round } from 'lodash';
 import {FC} from 'react';
 import { Area, Bar, CartesianGrid, ComposedChart, Label, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
@@ -28,9 +29,9 @@ const TrendItem:FC<{dailyTrends:Trend}> = ({dailyTrends}) => {
     //format date to MM/DD
     //sort by date ascending
     const data = dailyTrends.trends.map(trend=>({
-        Goal:dailyTrends.goal,
+        Goal: round(dailyTrends.goal,2),
         Date:format(new Date(trend.date),'MM/dd'),
-        Score:trend.score
+        Score: round(trend.score,2)
     })).sort((a,b)=>a.Date.localeCompare(b.Date));
 
     const maxScore = Math.max(...data.map(d=>d.Score));

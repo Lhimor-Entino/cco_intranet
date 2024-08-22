@@ -51,7 +51,7 @@ class IndividualPerformanceMetric extends Model
 
     private function minutesToHHMMSS($minutes)
     {
-        $totalSeconds = $minutes * 60;
+        $totalSeconds = round($minutes * 60);
         $hours = floor($totalSeconds / 3600);
         $remainingSeconds = $totalSeconds % 3600;
         $minutesPart = floor($remainingSeconds / 60);
@@ -60,7 +60,13 @@ class IndividualPerformanceMetric extends Model
         $formattedHours = str_pad($hours, 2, '0', STR_PAD_LEFT);
         $formattedMinutes = str_pad($minutesPart, 2, '0', STR_PAD_LEFT);
         $formattedSeconds = str_pad($secondsPart, 2, '0', STR_PAD_LEFT);
-
+        // return "$remainingSeconds";
         return "$formattedHours:$formattedMinutes:$formattedSeconds";
+    }
+    public function scopeWithRoundedGoals($query)
+    {
+        return $query->selectRaw('
+            id,project_id,user_id,metric_name,ROUND(goal,2) as goal, format,unit,rate_unit,position
+        ');
     }
 }

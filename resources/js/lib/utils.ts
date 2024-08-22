@@ -88,3 +88,6 @@ export const isInSecondsOrMinutes = (unit:string,daily_goal:string) => {
 
   return 0;
 }
+export const roundWithFormat = (value:number,decimal:number = 0) => {
+  return (Math.round(value * 100) / 100).toFixed(decimal);
+}

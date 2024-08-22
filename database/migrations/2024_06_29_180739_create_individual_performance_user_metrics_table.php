@@ -17,7 +17,7 @@
                 $table->id();
                 $table->unsignedBigInteger('individual_performance_metric_id')->index('metric_id');
                 $table->unsignedBigInteger('user_id')->index();
-                $table->integer('value');
+                $table->decimal('value', 25, 2)->default(0);
                 $table->date('date');
                 $table->smallInteger('is_appilcable')->default(1);
                 $table->timestamps();
