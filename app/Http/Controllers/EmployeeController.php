@@ -18,7 +18,7 @@ class EmployeeController extends Controller
     public function index()
     {
         return Inertia::render('EmployeeInfoRecords', [
-            'employees' => User::where('department', 'CCO')->get()
+            'employees' => User::with(['user_skills', 'violations', 'supervisor', 'team'])->where('department', 'LIKE', '%CCO%')->get()
         ]);
     }
 
