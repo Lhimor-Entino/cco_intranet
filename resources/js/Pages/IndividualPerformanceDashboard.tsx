@@ -304,7 +304,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                         </div>
                                       
                                         <AccordionContent asChild>
-                                            {( !!agent && !!date_range?.from && grouped_metrics && grouped_metrics.length > 1 ?
+                                            {( !!agent && !!date_range?.from && grouped_metrics && grouped_metrics.length > 0 ?
                                                 <Accordion  type="multiple" value={opened} onValueChange={onSetOpened} className="w-full">
                                                     {grouped_metrics.map(group=>(                                        
                                                         <AccordionItem key={group.date} value={group.date}>

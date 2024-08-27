@@ -6,6 +6,8 @@ use App\Models\Team;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Carbon\Carbon;
+use Exception;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -95,30 +97,50 @@ class HRMSController extends Controller
     public function sync()
     {
 
-        $api1 = "idcsi-officesuites.com:8080/hrms/api.php";
-        $api2 = "idcsi-officesuites.com:8082/hrms/api.php";
-        // FOR BOOHOO X' or d.divisions='N-FPO' or c.location like 'BOOHOO%' or c.jobcode='
-        // !!!!WARNING!!!! !!!FOR NOW, UTILIZE SQL INJECTION TO GET ALL CCO EMPLOYEES - THIS IS UNSAFE AND SHOULD BE CHANGED IN THE FUTURE!!!
+        $api1 = env('HRMS_MANILA_API');
+        $api2 = env('HRMS_LEYTE_API');
+        $job_code = env('HRMS_JOB_CODE');
+        $payload = [
+            'apitoken' =>   env('HRMS_API_TOKEN'),
+            'field'    =>   'allpeople',
+            'what'     =>   'getinfo',
+            'location' =>   env('HRMS_LOCATION'),
+            'division' =>   env('HRMS_DIVISION'),
+        ];
+
+        /*
+        !!!!WARNING!!!! !!!FOR NOW, UTILIZE SQL INJECTION TO GET ALL CCO EMPLOYEES - THIS IS UNSAFE AND SHOULD BE CHANGED IN THE FUTURE!!!
+       
+        1. Set global parameter value in .env file in order to dynamically change
+        2. Modify HRMS API subscription
+        Commented By: JOSH
+
         $hrms_response1 = Http::retry(10, 100)->asForm()->post($api1, [
-            'idno' => "X' or d.divisions='CCO' or c.location like 'CCO%' or c.jobcode='CCO",
+            'idno' => "X' or d.divisions='CCO' or c.location like 'CCO%' or c.jobcode='",
             'what' => 'getinfo',
             'field' => 'acctg',
             'apitoken' => 'IUQ0PAI7AI3D162IOKJH'
         ]);
-
-
-
         $hrms_response2 = Http::retry(10, 100)->asForm()->post($api2, [
-            'idno' => "X' or d.divisions='CCO' or c.location like 'CCO%' or c.jobcode='CCO",
+            'idno' => "X' or d.divisions='CCO' or c.location like 'CCO%' or c.jobcode='",
             'what' => 'getinfo',
             'field' => 'acctg',
             'apitoken' => 'IUQ0PAI7AI3D162IOKJH'
         ]);
-
-        $users = array_merge($hrms_response1['message'], $hrms_response2['message']);
-
-
-
+        */
+        $hrms_response_manila = null;
+        $hrms_response_leyte = null;
+        try {
+            $hrms_response_manila = Http::retry(10, 100)->asForm()->post($api1, $payload);
+            $hrms_response_leyte = Http::retry(10, 100)->asForm()->post($api2, $payload);
+            $hrms_response_manila = $hrms_response_manila != null ? $hrms_response_manila : ["message" => []];
+            $hrms_response_leyte = $hrms_response_leyte != null ? $hrms_response_leyte : ["message" => []];
+        } catch (Exception $e) {
+            $hrms_response_manila = $hrms_response_manila != null ? $hrms_response_manila : ["message" => []];
+            $hrms_response_leyte = $hrms_response_leyte != null ? $hrms_response_leyte : ["message" => []];
+        }
+        $users = array_merge(($hrms_response_manila['message']), ($hrms_response_leyte['message']));
+        return response()->json($users);
         DB::transaction(function () use ($users) {
 
             foreach ($users as $user) {
@@ -130,7 +152,7 @@ class HRMSController extends Controller
                         'middle_name' => $user['middle_name'],
                         'date_of_birth' => Carbon::parse($user['birthdate']),
                         'position' => $user['job_job_title'],
-                        'department' => $user['divisions'],
+                        'department' => $user['department'],
                         //'project'=>$user['jobcode'],
                         'site' => $user['job_location'],
                         'date_hired' => Carbon::parse($user['joined_date']),

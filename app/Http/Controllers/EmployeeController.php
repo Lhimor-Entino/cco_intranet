@@ -18,7 +18,7 @@ class EmployeeController extends Controller
     public function index()
     {
         return Inertia::render('EmployeeInfoRecords', [
-            'employees' => User::with(['user_skills','violations','supervisor','team'])->where('department','CCO')->get()
+            'employees' => User::where('department', 'CCO')->get()
         ]);
     }
 
@@ -88,12 +88,12 @@ class EmployeeController extends Controller
         //
     }
 
-    public function shift(Request $request, $id,$date)
+    public function shift(Request $request, $id, $date)
     {
-        $attendance_date = $date?Carbon::parse($date)->format('Y-m-d'):Carbon::now()->format('Y-m-d');
+        $attendance_date = $date ? Carbon::parse($date)->format('Y-m-d') : Carbon::now()->format('Y-m-d');
         $employee = User::findOrFail($id);
         $employee->update([
-            'shift_id'=>$request->shift_id
+            'shift_id' => $request->shift_id
         ]);
         /*
         $attendance = UserAttendance::where('user_id',$id)->where('date',date('Y-m-d'))->first();
@@ -104,10 +104,10 @@ class EmployeeController extends Controller
         }
         */
         UserAttendance::updateOrCreate([
-            'user_id'=>$id,
-            'date'=>$attendance_date
-        ],[
-            'shift_id'=>$request->shift_id
+            'user_id' => $id,
+            'date' => $attendance_date
+        ], [
+            'shift_id' => $request->shift_id
         ]);
         return redirect()->back();
     }
@@ -116,24 +116,26 @@ class EmployeeController extends Controller
     {
         $employee = User::findOrFail($id);
         $employee->update([
-            'is_archived'=>1
+            'is_archived' => 1
         ]);
         return redirect()->back();
     }
 
-    public function supervisor(Request $request,$id){
+    public function supervisor(Request $request, $id)
+    {
         $employee = User::findOrFail($id);
         $employee->update([
-            'user_id'=>$request->supervisor_id
+            'user_id' => $request->supervisor_id
         ]);
         return redirect()->back();
     }
 
-    public function search($params){
-        $employees = User::with(['team'])->where('department','CCO')
-            ->where('first_name','like','%'.$params.'%')
-            ->orWhere('last_name','like','%'.$params.'%')
-            ->orWhere('company_id','like','%'.$params.'%')
+    public function search($params)
+    {
+        $employees = User::with(['team'])->where('department', 'CCO')
+            ->where('first_name', 'like', '%' . $params . '%')
+            ->orWhere('last_name', 'like', '%' . $params . '%')
+            ->orWhere('company_id', 'like', '%' . $params . '%')
             ->get();
         return $employees;
     }

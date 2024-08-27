@@ -41,10 +41,9 @@ class IndividualPerformanceController extends Controller
         };
 
         if (isset($project_id)) {
-            if (!$project_history->contains('id', $project_id) && !$this->is_admin()) abort(403, 'This account is not assigned to this project. Please contact your administrator.');
+            if ($user->project_id != $project_id && !$project_history->contains('id', $project_id) && !$this->is_admin()) abort(403, 'This account is not assigned to this project. Please contact your administrator.');
             if ($user->project_id != $project_id && ($this->is_admin() || $this->is_team_lead())) return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_id, 'company_id' => (string)User::where('project_id', $project_id)->firstOrFail()->company_id]);
         }
-
 
         //abort 403 if not admin and not team lead, and company_id is not the same as $user->company_id
         if (!$this->is_admin() && !$this->is_team_lead() && isset($company_id) && $company_id != $my_company_id) abort(403);
