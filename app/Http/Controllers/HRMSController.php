@@ -140,7 +140,7 @@ class HRMSController extends Controller
             $hrms_response_leyte = $hrms_response_leyte != null ? $hrms_response_leyte : ["message" => []];
         }
         $users = array_merge(($hrms_response_manila['message']), ($hrms_response_leyte['message']));
-        return response()->json($users);
+
         DB::transaction(function () use ($users) {
 
             foreach ($users as $user) {

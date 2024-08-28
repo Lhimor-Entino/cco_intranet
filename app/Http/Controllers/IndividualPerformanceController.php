@@ -21,15 +21,22 @@ class IndividualPerformanceController extends Controller
     {
         $my_project_id = Auth::user()->project_id;
         $my_company_id = Auth::user()->company_id;
-        $agents = $this->is_admin() || $this->is_team_lead() ? User::where('project_id', $project_id)->get() : User::where('project_id', $project_id)->where('id', Auth::id())->get();
+        /*When in TL Account only agents who is member of the team to be fetched. Commented By: JOSH*/
+        $agents = $this->is_admin() || $this->is_team_lead() ?
+            User::where('project_id', $project_id)
+            ->when($this->is_team_lead() && !$this->is_admin(), function ($query) {
+                $query->whereIn('team_id', self::LeadedTeams());
+            })
+            ->get()
+            :
+            User::where('project_id', $project_id)->where('id', Auth::id())->get();
+        /*******************************************************************************************/
         $company_id = $request->company_id;
         //return response()->json(['condition' =>  $agents->contains('company_id', $company_id)]);
         $user = $company_id  ? User::where('company_id', $company_id)->where('project_id', $project_id)->firstOrFail() : Auth::user();
 
         $project_history = collect(
-            ProjectHistory::join('projects', 'project_histories.project_id', '=', 'projects.id')
-                ->where('project_histories.user_id', Auth::user()->id)
-                ->select('projects.*')->groupBy('projects.id')->get()
+            self::LeadedProjectswithHistories()
         );
         $project_id = (int) $project_id;
 
@@ -798,11 +805,13 @@ class IndividualPerformanceController extends Controller
         if (!$date) $date = Carbon::now()->format('Y-m-d');
         $user = Auth::user();
         $project = null;
+        $leaded_projects =  collect(self::LeadedProjects());
         if ($project_id && $this->is_admin()) {
             $project = Project::with(['metrics'])->where('id', $project_id)->firstOrFail();
         }
         if ($project_id && $this->is_team_lead() && !$this->is_admin()) {
-            if ($user->project_id != $project_id) abort(403);
+            // if ($user->project_id != $project_id) abort(403);
+            if (!$leaded_projects->contains('id', $project_id)) abort(403);
             $project = Project::with(['metrics'])->where('id', $project_id)->firstOrFail();
         }
 
@@ -811,20 +820,28 @@ class IndividualPerformanceController extends Controller
         }
 
         if (!$project_id && $this->is_team_lead() && !$this->is_admin()) {
-            if (!$user->project_id) abort(403);
+            // if (!$user->project_id) abort(403);
+            if (empty($leaded_projects)) abort(403);
             $project = Project::with(['metrics'])->where('id', $user->project_id)->firstOrFail();
         }
 
         $agents = User::with(['user_metrics' => function ($q) use ($date) {
             return $q->where('date', $date);
-        }])->where('project_id', $project->id)->get();
+        }])
+            ->where('project_id', $project->id)
+            ->when(($this->is_team_lead() && !$this->is_admin()), function ($query) {
+                /*if role is team lead filter dataset with leaded teams only.*/
+                $query->whereIn('team_id', self::LeadedTeams());
+            })
+            ->get();
 
         return Inertia::render('IndividualPerformanceRatingForm', [
             'is_admin' => $this->is_admin(),
             'is_team_leader' => $this->is_team_lead(),
             'project' => $project,
             'agents' => $agents,
-            'date' => $date
+            'date' => $date,
+            'leaded_projects' => $leaded_projects
         ]);
     }
 
@@ -908,4 +925,40 @@ class IndividualPerformanceController extends Controller
             $user->position == 'TEAM LEAD' ||
             $this->is_admin();
     }
+
+    /**TEAM LEADER'S FUNCTIONS*/
+    private function LeadedTeams()
+    {
+        $user = Auth::user();
+        $team_ids = Team::where('user_id', $user->id)->pluck('id');
+        return $team_ids;
+    }
+    private function LeadedProjects()
+    {
+        $user = Auth::user();
+        $projects = [];
+        $projects = Project::join('users', 'projects.id', '=', 'users.project_id')
+            ->when($this->is_team_lead() && !$this->is_admin(), function ($query) {
+                $query->whereIn('users.team_id', self::LeadedTeams());
+            })
+            ->when((($user->project_id ?? 0) > 0), function ($query) use ($user) {
+                $query->orWhere('projects.id', $user->project_id);
+            })
+            ->select('projects.*')
+            ->groupBy('projects.id')
+            ->get();
+
+        return $projects;
+    }
+    private function LeadedProjectswithHistories()
+    {
+        $projects = [];
+        $projects =  ProjectHistory::join('projects', 'project_histories.project_id', '=', 'projects.id')
+            ->join('users', 'projects.id', '=', 'users.project_id')
+            ->orWhereIn('users.team_id', self::LeadedTeams())
+            ->orWhere('project_histories.user_id', Auth::user()->id)
+            ->select('projects.*')->groupBy('projects.id')->get();
+        return  $projects;
+    }
+    /**END OF TEAM LEADER'S FUNCTIONS*/
 }

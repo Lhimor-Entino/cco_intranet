@@ -24,9 +24,10 @@ interface Props {
     project:Project;
     agents:User[];
     date:Date;
+    leaded_projects: Project[];
 }
 
-const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,project,agents,date}) => {
+const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,project,agents,date,leaded_projects}) => {
     
     const {projects} = usePage<Page<PageProps>>().props;
     const navigate = (selectedProject:Project) => Inertia.get(route('individual_performance_dashboard.agent.rating',{project_id:selectedProject.id}));
@@ -50,7 +51,7 @@ const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,proj
                     <div className="flex-1 flex flex-col overflow-auto gap-y-3.5">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
                             <div className='flex items-center gap-x-2'>
-                                <ProjectSelectionComboBox isAdmin={is_admin} projects={projects} selectedProject={project} onSelectProject={navigate} />
+                                <ProjectSelectionComboBox isAdmin={is_admin || is_team_leader} projects={(is_team_leader && !is_admin)? leaded_projects : projects} selectedProject={project} onSelectProject={navigate} />
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
