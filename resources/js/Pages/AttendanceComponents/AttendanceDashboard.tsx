@@ -24,9 +24,9 @@ const AttendanceDashboard:FC<Props> = ({users,dt,loading}) => {
     const getServerTime = axios.get(route('api.get_server_time')).then((res:{data:string}) => res.data);
     
     const { isLoading, isError, data, error } =useQuery(['get_server_time'], ()=>getServerTime,{refetchInterval: 60000});
-
-    const manilaUsers = users.filter(user => user.site.toLocaleLowerCase() === 'manila');
-    const leyteUsers = users.filter(user => user.site.toLocaleLowerCase() === 'leyte');
+    
+    const manilaUsers = users.filter(user => user?.site?.toLocaleLowerCase() === 'manila');
+    const leyteUsers = users.filter(user => user?.site?.toLocaleLowerCase() === 'leyte');
     
     const {shifts,projects} = usePage<Page<PageProps>>().props;
     const timeZone = 'Asia/Manila';
