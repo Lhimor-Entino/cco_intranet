@@ -19,8 +19,12 @@ class IndividualPerformanceController extends Controller
 {
     public function index(Request $request, $project_id = null)
     {
-        $my_project_id = Auth::user()->project_id;
-        $my_company_id = Auth::user()->company_id;
+        $my_user = Auth::user();
+        $my_project_id = $my_user->project_id ?? 0; //Auth::user()->project_id;
+        $my_company_id = $my_user->company_id ?? 0; //Auth::user()->company_id;
+        $has_any_Project = Project::count() > 0;
+        /*STOP RECURSIVE CALL IF NO PROJECT*/
+        if (!$has_any_Project) return self::hasNoIndividual($my_user);
         /*When in TL Account only agents who is member of the team to be fetched. Commented By: JOSH*/
         $agents = $this->is_admin() || $this->is_team_lead() ?
             User::where('project_id', $project_id)
@@ -31,10 +35,9 @@ class IndividualPerformanceController extends Controller
             :
             User::where('project_id', $project_id)->where('id', Auth::id())->get();
         /*******************************************************************************************/
-        $company_id = $request->company_id;
-        //return response()->json(['condition' =>  $agents->contains('company_id', $company_id)]);
-        $user = $company_id  ? User::where('company_id', $company_id)->where('project_id', $project_id)->firstOrFail() : Auth::user();
-
+        /*if param company ID not complied set default 1st agent (part of team) of the proj.*/
+        $company_id = $request->company_id ? $request->company_id : (!empty($agents) && count($agents) > 0 ? $agents[0]->company_id : "");
+        $user = $company_id  ? User::where('company_id', $company_id)->where('project_id', $project_id)->firstOrFail() : $my_user;
         $project_history = collect(
             self::LeadedProjectswithHistories()
         );
@@ -42,14 +45,20 @@ class IndividualPerformanceController extends Controller
 
         if (!$project_id) {
             $project_id = $user->project_id;
-            if (!$project_id && !$this->is_admin()) abort(403, 'This account is not assigned to any project. Please contact your administrator.');
+            if (!$project_id && !$this->is_admin() && !$this->is_team_lead()) abort(403, 'This account is not assigned to any project. Please contact your administrator.');
             if (!$project_id && $this->is_admin()) return redirect()->route('individual_performance_dashboard.index', ['project_id' => Project::first()->id]);
+            if (!$project_id && $this->is_team_lead() && !$this->is_admin()) {
+                if ($project_history->isEmpty()) {
+                    return self::hasNoIndividual($user);
+                }
+                return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_history[0]['id']]);
+            }
             return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_id]);
         };
 
         if (isset($project_id)) {
             if ($user->project_id != $project_id && !$project_history->contains('id', $project_id) && !$this->is_admin()) abort(403, 'This account is not assigned to this project. Please contact your administrator.');
-            if ($user->project_id != $project_id && ($this->is_admin() || $this->is_team_lead())) return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_id, 'company_id' => (string)User::where('project_id', $project_id)->firstOrFail()->company_id]);
+            // if ($user->project_id != $project_id && ($this->is_admin() || $this->is_team_lead())) return redirect()->route('individual_performance_dashboard.index', ['project_id' => $project_id, 'company_id' => (string)User::where('project_id', $project_id)->firstOrFail()->company_id]);
         }
 
         //abort 403 if not admin and not team lead, and company_id is not the same as $user->company_id
@@ -176,6 +185,50 @@ class IndividualPerformanceController extends Controller
         }
         return $result;
     }
+    /*ACCESS HANDLERS---------------------------------------------------------------*/
+    public function hasNoIndividual($user)
+    {
+        $project = ["id" => 0, "name" => "No Project Found", "metrics" => []];
+        $from = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = Carbon::now()->endOfMonth()->format('Y-m-d');
+        return Inertia::render('IndividualPerformanceDashboard', [
+            'is_admin' => $this->is_admin(),
+            'is_team_leader' => $this->is_team_lead(),
+            'project' => $project,
+            'project_histories' => [],
+            'agents' => [],
+            'date_range' => [
+                'from' => $from,
+                'to' => $to
+            ],
+            'agent' => $user->load(['team']),
+            'agent_averages' => [],
+            'grouped_metrics' => [],
+        ]);
+    }
+    public function hasNoProject($user)
+    {
+        $project = ["id" => 0, "name" => "No Project Found", "metrics" => []];
+        $from = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = Carbon::now()->endOfMonth()->format('Y-m-d');
+        return Inertia::render('ProjectPerformanceDashboard', [
+            'is_admin' => $this->is_admin(),
+            'is_team_leader' => $this->is_team_lead(),
+            'date_range' => [
+                'from' => $from,
+                'to' => $to
+            ],
+            'project' => $project,
+            'projects' => [$project],
+            'agents' => [],
+            'user_breakdown' => [],
+            'breakdown' => [],
+            'project_trends' => [],
+            'project_histories' => [],
+            'top_performers' => []
+        ]);
+    }
+
     public function hasNoTeamContent($user)
     {
         $team = ["id" => 0, "name" => "(No Team) " . $user->last_name, "user" => $user, "user_id" => $user->id];
@@ -197,9 +250,14 @@ class IndividualPerformanceController extends Controller
             'top_performers' => []
         ]);
     }
+    /*END OF ACCESS HANDLERS---------------------------------------------------------------*/
     public function team(Request $request, $team_id = null)
     {
         $user = Auth::user();
+        $has_any_team = Team::count() > 0;
+        if (!$has_any_team) {
+            return self::hasNoTeamContent($user);
+        }
         $team = !$team_id ? Team::firstOrFail() : Team::where('id', $team_id)->firstOrFail();
 
         if (!$team_id) {
@@ -460,18 +518,15 @@ class IndividualPerformanceController extends Controller
     public function project(Request $request, $project_id = null)
     {
         $user = Auth::user();
+        $has_any_project = Project::count() > 0;
+        if (!$has_any_project) return self::hasNoProject($user);
+        $project_history = collect(self::LeadedProjectswithHistories());
         $project = !$project_id ? Project::first() : Project::where('id', $project_id)->firstOrFail();
         if (!$project_id) {
             if (isset($user->project_id)) return redirect()->route('individual_performance_dashboard.project', ['project_id' => $user->project_id]);
             if ($this->is_admin() && !isset($user->project_id)) return redirect()->route('individual_performance_dashboard.project', ['project_id' => $project->id]);
             abort(403, 'This account is not assigned to any Project. Please contact your administrator.');
         }
-
-        $project_history = collect(
-            ProjectHistory::join('projects', 'project_histories.project_id', '=', 'projects.id')
-                ->where('project_histories.user_id', Auth::user()->id)
-                ->select('projects.*')->groupBy('projects.id')->get()
-        );
 
         if (!$project_history->contains('id', $project_id) && !$this->is_admin()) abort(403, 'This account is not assigned to this Project. Please contact your administrator.');
         /**Prevent Adding Day Commented by Josh*/

@@ -38,6 +38,6 @@ class HeadOnly
         if (auth()->user()->position == 'PROGRAMMER' || auth()->user()->position == 'REPORTS ANALYST' || auth()->user()->position == 'REAL TIME ANALYST' || auth()->user()->position == 'QUALITY ASSURANCE AND TRAINING SUPERVISOR' || auth()->user()->position == 'QUALITY ANALYST 6' || auth()->user()->position == 'QUALITY ANALYST 5' || auth()->user()->position == 'QUALITY ANALYST 4' || auth()->user()->position == 'QUALITY ANALYST 3' || auth()->user()->position == 'QUALITY ANALYST 2' || auth()->user()->position == 'QUALITY ANALYST 1' || auth()->user()->position == 'QUALITY ANALYST' || auth()->user()->position == 'OPERATIONS SUPERVISOR 2' || auth()->user()->position == 'OPERATIONS SUPERVISOR' || auth()->user()->position == 'OPERATIONS MANAGER' || auth()->user()->position == 'GENERAL MANAGER') {
             return $next($request);
         }
-        abort(403,'Only Head/Manager/Supervisor of the Department can access this page.');
+        abort(403, 'Only Head/Manager/Supervisor of the Department can access this page.');
     }
 }

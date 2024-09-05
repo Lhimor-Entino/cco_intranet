@@ -210,3 +210,22 @@ body,
   @apply !fill-primary  !font-bold ;
 }
 
+/* For Webkit-based browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+    width: 6px; /* Thinner scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f11c; /* Background color of the scrollbar track */
+    border-radius: 10px; /* Rounded edges of the track */
+}
+
+::-webkit-scrollbar-thumb {
+    background:  #97a1bd; /* Scrollbar thumb color */
+    border-radius: 10px; /* Rounded edges of the scrollbar thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #97a1bd; /* Darker color on hover */
+}
+

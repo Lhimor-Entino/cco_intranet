@@ -25,7 +25,7 @@ interface Props {
 }
 
 const Attendance:FC<Props> = ({dt}) => {
-    const { isLoading, isError, data, error } =useQuery(['attendances',dt], ()=>getAttendances(dt),{refetchInterval: 120000});
+    const { isLoading, isError, data, error } = useQuery(['attendances',dt], ()=>getAttendances(dt),{refetchInterval: 120000});
     const [strFilter, setStrFilter] = useState<string>('');
     const [shiftFilter, setShiftFilter] = useState<string|undefined>();
     const [showDashboard,setShowDashboard] = useLocalStorage('showDashboard',true);
@@ -108,7 +108,7 @@ const Attendance:FC<Props> = ({dt}) => {
     return (
         <>
             <Head title="Attendance" />
-            <Layout title={`Daily Attendance - ${zonedDate} - ${head}`}>
+            <Layout title={`Daily Attendance - ${zonedDate}`}>
                 <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container py-2.5'>
                     
                     {

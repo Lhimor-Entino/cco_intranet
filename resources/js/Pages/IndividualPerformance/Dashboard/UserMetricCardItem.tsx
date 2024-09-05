@@ -15,7 +15,7 @@ interface Props {
 
 const UserMetricCardItem:FC<Props> = ({userMetric,agent}) => {
     const hasGoal = userMetric.metric.goal >0;
-    const hasFailed = userMetric.value!==0&& hasGoal?  userMetric.value < userMetric.metric.goal:false;
+    const hasFailed = userMetric.value !== 0 && hasGoal?  round(userMetric.value,2) < round(userMetric.metric.goal,2) : false;
     return (
         <Hint className='bg-slate-50 dark:bg-slate-950 border border-primary shadow-md shadow-primary' key={userMetric.id} label={<UserMetricHint agent={agent} userMetric={userMetric} />} side='right' >
             <Card key={userMetric.id} className={cn('flex flex-col w-full border-l-[5px] shadow-lg cursor-pointer hover:opacity-70 transition duration-300',

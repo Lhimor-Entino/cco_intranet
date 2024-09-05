@@ -17,8 +17,9 @@ class EmployeeController extends Controller
      */
     public function index()
     {
+        // WARNING NEED TO MODIFY HANDLE DIFFERENT STRING KEYWORD OF DEPARTMENT
         return Inertia::render('EmployeeInfoRecords', [
-            'employees' => User::with(['user_skills', 'violations', 'supervisor', 'team'])->where('department', 'LIKE', '%CCO%')->get()
+            'employees' => User::with(['user_skills', 'violations', 'supervisor', 'team'])->where('department', '<>', 'SOFTWARE')->get()
         ]);
     }
 
@@ -132,7 +133,7 @@ class EmployeeController extends Controller
 
     public function search($params)
     {
-        $employees = User::with(['team'])->where('department', 'CCO')
+        $employees = User::with(['team'])->where('department', '<>', 'SOFTWARE')
             ->where('first_name', 'like', '%' . $params . '%')
             ->orWhere('last_name', 'like', '%' . $params . '%')
             ->orWhere('company_id', 'like', '%' . $params . '%')
