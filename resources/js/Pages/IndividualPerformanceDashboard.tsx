@@ -9,7 +9,7 @@ import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionCo
 import UserSelectionComboBox from './IndividualPerformance/UserSelectionComboBox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
-import { cn, parseDateRange, roundWithFormat } from '@/lib/utils';
+import { cn, convertToTimezone, parseDateRange, roundWithFormat } from '@/lib/utils';
 import {  BarChartBig, BetweenHorizontalStart, CalendarIcon,  Edit,  ExpandIcon,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
@@ -65,11 +65,17 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
     const isSelf = user.id === agent?.id;
     const [selectedUser,setSelectedUser] = useState<User|undefined>(agent);
     const [initialDate, setDate] = useState<DateRange | undefined>(date_range);
+    useMemo(() => {
+        const date = parseDateRange(initialDate);
+        const param = {from: convertToTimezone(new Date(date.from + '')), to: convertToTimezone(new Date(date.to + ''))}
+        setDate(param);
+    },[]);
     const navigate = () => {
         if(!project) return toast.error('Please select a project');
         if(!selectedUser) return toast.error('Please select an agent');
         if(!initialDate) return toast.error('Please select a date range or pick a date');
         const date = parseDateRange(initialDate);
+        console.log('Initial Date: ', date_range, 'Parse Date: ', date);
         Inertia.get(route('individual_performance_dashboard.index',{
             project_id:project.id,
             date,

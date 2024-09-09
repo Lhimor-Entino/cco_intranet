@@ -60,18 +60,33 @@ export function minutesToHHMMSS(minutes:number) {
 
   return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 }
-
+export const setTimeZone = (date : Date) => {
+  return date.toLocaleDateString('en-US', {
+    timeZone: 'Asia/Manila', // Set your desired timezone
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+}
 export const parseDateRange = (d:DateRange | undefined):{from:string | null; to: string | null} => {
-  const from = new Date(d?.from + '').toLocaleDateString();
-  const to = d?.to ? new Date(d?.to + '').toLocaleDateString() : null;
+  const from = setTimeZone(new Date(d?.from + '')); //new Date(d?.from + '').toLocaleDateString();
+  const to = d?.to ? setTimeZone(new Date(d?.to + '')) : null; //new Date(d?.to + '').toLocaleDateString() : null;
   const formatDate = (dateStr: string | null) => {
       if(!dateStr){return null}
       const [month, day, year] = dateStr.split('/');
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    };
+    }; 
   return {from:formatDate(from), to: formatDate(to)};
 }
+// Utility function to convert a Date object to a specific timezone (adjustment only)
+export const convertToTimezone = (date:Date, offsetHours:number = 8) => {
+  // if (!date) return null;
 
+  const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000); // Convert to UTC first
+  const timezoneDate = new Date(utcDate.getTime() + offsetHours * 60 * 60 * 1000); // Apply the timezone offset
+
+  return timezoneDate;
+};
 export const isInSecondsOrMinutes = (unit:string,daily_goal:string) => {
   let parts = daily_goal.split(':');
   // Assuming the time string is always in the format HH:MM:SS

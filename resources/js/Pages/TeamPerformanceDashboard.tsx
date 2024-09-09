@@ -8,7 +8,7 @@ import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionCo
 import { Inertia, Page } from '@inertiajs/inertia';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
-import { cn, parseDateRange } from '@/lib/utils';
+import { cn, convertToTimezone, parseDateRange } from '@/lib/utils';
 import { DateRange } from 'react-day-picker';
 import { BarChartBig, BetweenHorizontalStart, CalendarIcon, Heading1, SmileIcon, SquareArrowRightIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -41,6 +41,11 @@ const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,
 
     const {user} = usePage<Page<PageProps>>().props.auth;
     const [date, setDate] = useState<DateRange | undefined>(date_range);
+    useMemo(() => {
+        const date_parsed = parseDateRange(date_range);
+        const param = {from: convertToTimezone(new Date(date_parsed.from + '')), to: convertToTimezone(new Date(date_parsed.to + ''))}
+        setDate(param);
+    },[]);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.team',{team_id:t.id}));
     const ownTeam = user.team_id===team.id;
     const navigate = () => {

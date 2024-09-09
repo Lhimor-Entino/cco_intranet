@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
-import { cn, isValid24HrTime } from '@/lib/utils';
+import { cn, convertToTimezone, isValid24HrTime } from '@/lib/utils';
 import { PageProps } from '@/types';
 import { TrainingAssessment } from '@/types/trainingInfo';
 import { Page } from '@inertiajs/inertia';
@@ -59,7 +59,7 @@ const AssessmentShareModal:FC<Props> = ({assessment,isOpen,onClose}) => {
         tomorrow.setDate(tomorrow.getDate()+1);
         setData(val=>({
             ...val,
-            date:format(tomorrow, "yyyy-MM-dd"),
+            date:format(convertToTimezone(tomorrow), "yyyy-MM-dd"),
             time:'16:00:00',
         }));
         

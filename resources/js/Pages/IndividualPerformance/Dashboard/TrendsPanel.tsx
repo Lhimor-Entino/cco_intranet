@@ -1,4 +1,5 @@
 import { Trend } from '@/Pages/IndividualPerformanceDashboard';
+import { convertToTimezone } from '@/lib/utils';
 import { format } from 'date-fns';
 import { round } from 'lodash';
 import {FC} from 'react';
@@ -30,7 +31,7 @@ const TrendItem:FC<{dailyTrends:Trend}> = ({dailyTrends}) => {
     //sort by date ascending
     const data = dailyTrends.trends.map(trend=>({
         Goal: round(dailyTrends.goal,2),
-        Date:format(new Date(trend.date),'MM/dd'),
+        Date:format(convertToTimezone(new Date(trend.date)),'MM/dd'),
         Score: round(trend.score,2)
     })).sort((a,b)=>a.Date.localeCompare(b.Date));
 

@@ -12,7 +12,7 @@ import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionCo
 import { Popover, PopoverContent } from '@/Components/ui/popover';
 import { PopoverTrigger } from '@radix-ui/react-popover';
 import { Button } from '@/Components/ui/button';
-import { cn, parseDateRange } from '@/lib/utils';
+import { cn, convertToTimezone, parseDateRange } from '@/lib/utils';
 import {  BarChartBig, BetweenHorizontalStart, CalendarIcon, SquareArrowRightIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
@@ -39,6 +39,11 @@ interface Props {
 const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,projects,project, breakdown,project_trends,top_performers,project_histories}) => {
     const {user} = usePage<Page<PageProps>>().props.auth;
     const [date, setDate] = useState<DateRange | undefined>(date_range);
+    useMemo(() => {
+        const date_parsed = parseDateRange(date_range);
+        const param = {from: convertToTimezone(new Date(date_parsed.from + '')), to: convertToTimezone(new Date(date_parsed.to + ''))}
+        setDate(param);
+    },[]);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.project',{project_id:t.id}));
     const ownProject = user.team_id===project.id;
     const navigate = (project:Project) => {

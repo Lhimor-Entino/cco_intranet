@@ -2,7 +2,7 @@ import Layout from '@/Components/Layout/Layout';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { TrainingAssessment, TrainingAssessmentResult } from '@/types/trainingInfo';
 import { Head } from '@inertiajs/inertia-react';
-import {ChangeEventHandler, FC, FormEventHandler, useEffect, useState} from 'react';
+import {ChangeEventHandler, FC, FormEventHandler, useEffect, useMemo, useState} from 'react';
 import AssessmentIndexItem from './AssessmentComponents/AssessmentIndex/AssessmentIndexItem';
 import ManualCheckModal from './AssessmentComponents/AssessmentIndex/ManualCheckModal';
 import { Pagination, User } from '@/types';
@@ -13,7 +13,7 @@ import { Inertia } from '@inertiajs/inertia';
 import { Label } from '@/Components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
-import { ExportToExcel, cn } from '@/lib/utils';
+import { ExportToExcel, cn, convertToTimezone, parseDateRange } from '@/lib/utils';
 import { format } from 'date-fns';
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRight, FileSpreadsheet, ListFilter } from 'lucide-react';
 import { Calendar } from '@/Components/ui/calendar';
@@ -38,7 +38,11 @@ const AssessmentIndex:FC<Props> = ({results,remarks='all',dateRange,user_filter,
     const [dateFilters,setDateFilters] = useState<DateRange|undefined>(dateRange);
     const [remarkFilters,setRemarkFilters] = useState<typeof remarks>(remarks);
     const [perPage,setPerPage] = useState(per_page);
-
+    useMemo(() => {
+        const date_parsed = parseDateRange(dateRange);
+        const param = {from: convertToTimezone(new Date(date_parsed.from + '')), to: convertToTimezone(new Date(date_parsed.to + ''))}
+        setDateFilters(param);
+    },[]);
     
     const onSubmit:FormEventHandler<HTMLFormElement> = e =>{
         e.preventDefault();
