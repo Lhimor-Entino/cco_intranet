@@ -136,7 +136,7 @@ class AttendanceController extends Controller
 
     public function generate_report(Request $request)
     {
-        $cco_users = User::withoutGlobalScope('is_archived')->select('company_id')->where('department', '<>', '%SOFTWARE%')->get();
+        $cco_users = User::withoutGlobalScope('is_archived')->select('company_id')->where('department', '<>', 'SOFTWARE')->get();
         $ids = $cco_users->pluck('company_id');
 
 
@@ -184,6 +184,6 @@ class AttendanceController extends Controller
         }
         return User::withoutGlobalScope('is_archived')->with(['attendances' => function ($q) use ($from, $to) {
             $q->whereBetween('date', [$from, $to]);
-        }, 'attendances.shift'])->where('department', 'LIKE', '%CCO%')->get();
+        }, 'attendances.shift'])->where('department', '<>', 'SOFTWARE')->get();
     }
 }

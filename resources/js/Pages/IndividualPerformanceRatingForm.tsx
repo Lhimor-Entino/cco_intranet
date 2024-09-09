@@ -2,7 +2,7 @@ import Header from '@/Components/Header';
 import Layout from '@/Components/Layout/Layout';
 import { PageProps, Project, User } from '@/types';
 import { Head, usePage } from '@inertiajs/inertia-react';
-import {FC, useState} from 'react';
+import React, {FC, useEffect, useState} from 'react';
 import IPDDropdown from './IndividualPerformance/IPDDropdown';
 import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionComboBox';
 import { Inertia, Page } from '@inertiajs/inertia';
@@ -17,6 +17,7 @@ import { Calendar } from '@/Components/ui/calendar';
 import IndividualPerformanceRatingFormItem from './IndividualPerformance/IndividualPerformanceRatingFormItem';
 import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
+import { initial } from 'lodash';
 
 interface Props {
     is_admin:boolean;
@@ -27,18 +28,24 @@ interface Props {
     leaded_projects: Project[];
 }
 
-const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,project,agents,date,leaded_projects}) => {
+const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,project,agents,date:date_initial,leaded_projects}) => {
     
     const {projects} = usePage<Page<PageProps>>().props;
     const navigate = (selectedProject:Project) => Inertia.get(route('individual_performance_dashboard.agent.rating',{project_id:selectedProject.id}));
     const {metrics} = project;
     const onSetDate = (date?:Date) => {
         if(!date) return;
+        setDate(date);
         Inertia.get(route('individual_performance_dashboard.agent.rating',{project_id:project.id,date:format(date,"yyyy-MM-dd")}));
     }
+    const [date, setDate] = React.useState<Date>(date_initial)
     const [hideSaved, setHideSaved] = useState(false);
     const [showName, setShowName] = useState(true);
     const Icon = !showName ? ArrowBigRight : ArrowBigLeft
+    useEffect(() => {
+        // Set the date when the component mounts
+        setDate(new Date(date));
+      }, []);
     return (
         <>
             <Head title="Individual Performance Ratings Page" />

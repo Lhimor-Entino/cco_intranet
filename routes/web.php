@@ -58,7 +58,6 @@ Route::get('/', function (Request $request) {
 
 //AUTH ROUTE GROUP
 Route::middleware(['auth'])->group(function () {
-
     Route::get('my-page', [MyPageController::class, 'index'])->name('my_page');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

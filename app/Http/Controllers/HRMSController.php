@@ -104,7 +104,7 @@ class HRMSController extends Controller
             'apitoken' =>   env('HRMS_API_TOKEN'),
             'field'    =>   'allpeople',
             'what'     =>   'getinfo',
-            'location' =>   env('HRMS_LOCATION'),
+            // 'location' =>   env('HRMS_LOCATION'),
             'division' =>   env('HRMS_DIVISION'),
         ];
 

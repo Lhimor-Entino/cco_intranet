@@ -311,7 +311,7 @@ class IndividualPerformanceController extends Controller
             })
             ->whereIn('individual_performance_user_metrics.user_id', $users->pluck('id')->toArray())
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
-            ->where('individual_performance_user_metrics.value', '>', 0)
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy(
                 'individual_performance_user_metrics.individual_performance_metric_id',
                 'individual_performance_metrics.metric_name',
@@ -376,7 +376,7 @@ class IndividualPerformanceController extends Controller
             })
             ->whereIn('individual_performance_user_metrics.user_id', $users->pluck('id')->toArray())
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
-            ->where('individual_performance_user_metrics.value', '>', 0)
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy(
                 'individual_performance_user_metrics.individual_performance_metric_id',
                 'individual_performance_metrics.metric_name',
@@ -411,7 +411,7 @@ class IndividualPerformanceController extends Controller
             ->whereIn('individual_performance_user_metrics.user_id', $users->pluck('id')->toArray())
             ->whereBetween('individual_performance_user_metrics.date', [$from, $to])
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
-            ->where('individual_performance_user_metrics.value', '>', 0)
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy('individual_performance_user_metrics.date', 'individual_performance_user_metrics.individual_performance_metric_id', 'individual_performance_metrics.goal')
             ->orderBy('individual_performance_metrics.position', 'asc')
             ->orderBy('individual_performance_user_metrics.individual_performance_metric_id')
@@ -569,7 +569,7 @@ class IndividualPerformanceController extends Controller
             })
             ->whereIn('individual_performance_user_metrics.user_id', $users->pluck('id')->toArray())
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
-            ->where('individual_performance_user_metrics.value', '>', 0)
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy(
                 'individual_performance_user_metrics.individual_performance_metric_id',
                 'individual_performance_metrics.metric_name',
@@ -635,7 +635,7 @@ class IndividualPerformanceController extends Controller
             })
             ->whereIn('individual_performance_user_metrics.user_id', $users->pluck('id')->toArray())
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
-            ->where('individual_performance_user_metrics.value', '>', 0)
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy(
                 'individual_performance_user_metrics.individual_performance_metric_id',
                 'individual_performance_metrics.metric_name',
@@ -669,7 +669,7 @@ class IndividualPerformanceController extends Controller
             ->whereIn('individual_performance_user_metrics.user_id', $users->pluck('id')->toArray())
             ->whereBetween('individual_performance_user_metrics.date', [$from, $to])
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
-            ->where('individual_performance_user_metrics.value', '>', 0)
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy('individual_performance_user_metrics.date', 'individual_performance_user_metrics.individual_performance_metric_id', 'individual_performance_metrics.goal')
             // ->orderBy('individual_performance_user_metrics.individual_performance_metric_id')
             // ->orderBy('individual_performance_user_metrics.date')
