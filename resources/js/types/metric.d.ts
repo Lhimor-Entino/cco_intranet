@@ -1,6 +1,6 @@
 
 
-import { Project, TimeStamp, User } from ".";
+import { Project, Setting, TimeStamp, User } from ".";
 
 export type MetricFormat ='number'|'percentage'|'duration'|'rate'
 
@@ -18,6 +18,7 @@ export interface IndividualPerformanceMetric extends TimeStamp {
     project:Project;
     user_metrics:IndividualPerformanceUserMetric[];
     position:number;
+    setting: Setting;
 }
 
 

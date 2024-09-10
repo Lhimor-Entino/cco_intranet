@@ -196,3 +196,11 @@ export interface Team{
     user:User;
     users:User[];    
 }
+
+export interface Setting{
+    id:number;
+    individual_performance_metric_id:number;
+    name:string;
+    value:string;
+    tag:string;
+}

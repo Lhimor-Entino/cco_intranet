@@ -3,14 +3,15 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/Components/ui/select';
 import { Separator } from '@/Components/ui/separator';
-import { PageProps, Project } from '@/types';
+import { PageProps, Project, Setting } from '@/types';
 import { IndividualPerformanceMetric, MetricFormat } from '@/types/metric';
 import { Page } from '@inertiajs/inertia';
 import { useForm, usePage } from '@inertiajs/inertia-react';
 import { round } from 'lodash';
-import { Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowDownWideNarrow, ArrowUp, ArrowUp01, ArrowUpNarrowWide, ArrowUpWideNarrow, Loader2 } from 'lucide-react';
 import {ChangeEventHandler, FC, FormEventHandler, useEffect, useState} from 'react';
 import { toast } from 'sonner';
 
@@ -18,7 +19,7 @@ interface Props {
     isOpen:boolean;
     onClose:()=>void;
     metric?:IndividualPerformanceMetric;
-    project:Project
+    project:Project;
 }
 
 const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
@@ -31,13 +32,25 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
         format:MetricFormat;
         unit?:string;
         rate_unit?:string;
+        setting : {
+            individual_performance_metric_id?: number;
+            name: string;
+            value: string;
+            tag: string;
+        }
     }>({
         metric_name:metric?.metric_name||"",
         goal:metric?.goal||0,
         format:metric?.format||"number",
         unit:metric?.unit||"",
         rate_unit:metric?.rate_unit||"",
-        project_id:project.id
+        project_id:project.id,
+        setting: {
+             individual_performance_metric_id: metric?.setting?.individual_performance_metric_id || 0,
+             name: metric?.setting?.name || 'top_performer_order',
+             value: metric?.setting?.value || 'DESC',
+             tag: metric?.setting?.tag || 'dashboard_setting'
+            }
     });
     
     useEffect(()=>{
@@ -61,8 +74,10 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
                 goal:goal(),
                 format:metric.format,
                 unit:metric.unit,
-                rate_unit:metric.rate_unit
+                rate_unit:metric.rate_unit,
+                setting:metric.setting
             }));
+            console.log('Effect: ', data);
             if(metric.goal === 0) setNoGoal(true);
         } 
     },[isOpen,metric]);
@@ -108,6 +123,15 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
             format,
             unit:format==='duration'?'minutes':unit
         }));
+    }
+    const onSettingChange = (value:string) => {
+       setData(val => ({
+         ...val,
+         setting:{
+            ...val.setting,
+            value:value
+         }
+       }));
     }
 
     const handleUnitChange = (e:string) =>{
@@ -211,12 +235,26 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
                             </div>
                         </Label>
                         <div className='relative'>
-                            <Input required={!noGoal} disabled={processing || noGoal} type='number' step="0.01" className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value={data.goal} onChange={handleSetGoal} />
+                            <Input required={!noGoal} disabled={processing || noGoal} type='number' step="0.01" className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value={round(data.goal,2)} onChange={handleSetGoal} />
                             <Label className='text-muted-foreground absolute right-3.5 top-3.5'>
                                 {data.format !== 'rate'?data.unit: `${data.unit} per ${data.rate_unit}` }
                             </Label>
                         </div>
                     </div>
+                    <Separator className='border'/>
+                    <small>Dashboard Settings (<b>Top Performer Order</b>)</small>
+                    <RadioGroup disabled={processing} onValueChange={onSettingChange}  value={data.setting.value} className="flex space-x-4">
+                        <div className="flex items-center space-x-4">
+                            <RadioGroupItem value="DESC" id="desc" />
+                            <ArrowDownWideNarrow/>
+                            <Label htmlFor="desc">Descending</Label>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <RadioGroupItem value="ASC" id="asc" />
+                            <ArrowUpNarrowWide/>
+                            <Label htmlFor="asc">Ascending </Label>
+                        </div>
+                    </RadioGroup>
                     <Button type='submit' disabled={processing} className='ml-auto' size='sm' >
                         {processing && <Loader2 className='h-4 w-4 mr-2 animate-spin' />}
                         Save Changes

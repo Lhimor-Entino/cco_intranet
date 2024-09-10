@@ -14,6 +14,7 @@ import { useProjectSettingsModal } from '@/Hooks/useProjectSettingsModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { useShiftSettingsModal } from '@/Hooks/useShiftSettingsModal';
 import DebugLoginModal from './ProgrammerSettings/DebugLoginModal';
+import { isAdmin, isTeamLead } from '@/lib/utils';
 
 interface Props {
     title?:string;
@@ -97,9 +98,10 @@ interface QuickLinksProps{
 }
 
 const QuickLinks:FC<QuickLinksProps> = ({children}) =>{
-
-    const quickLinks = useMemo(()=>NavItems.map(navItem=>navItem.items.filter(i=>i.quick===true)).flat(),[NavItems]);
-
+    const isAdminRef = isAdmin();
+    const isTeamRef = isTeamLead();
+    const quickLinks = useMemo(()=>NavItems(isAdminRef,isTeamRef).map(navItem=>navItem.items.filter(i=>i.quick===true)).flat(),[NavItems]);
+    
     return (
         <Popover >
             <PopoverTrigger asChild>

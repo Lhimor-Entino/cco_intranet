@@ -29,6 +29,16 @@ class IndividualPerformanceMetric extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function settings($tag)
+    {
+        return $this->hasMany(MetricSettings::class)->where('tag', $tag);
+    }
+
+    public function setting($tag, $name)
+    {
+        return $this->hasOne(MetricSettings::class)->where('tag', $tag)->where('name', $name);
+    }
+
     public function getDailyGoalAttribute()
     {
         if ($this->goal !== 0) {

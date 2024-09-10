@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\IndividualPerformanceMetric;
 use App\Models\IndividualPerformanceUserMetric;
+use App\Models\MetricSettings;
 use App\Models\Project;
 use App\Models\ProjectHistory;
 use App\Models\Team;
@@ -439,6 +440,12 @@ class IndividualPerformanceController extends Controller
         $results = DB::table('individual_performance_user_metrics as a')
             ->join('individual_performance_metrics as b', 'a.individual_performance_metric_id', '=', 'b.id')
             ->join('users as c', 'a.user_id', '=', 'c.id')
+            ->leftJoin('metric_settings as setting', function ($join) {
+                // GET SORTING SETTINGS
+                $join->on('setting.individual_performance_metric_id', '=', 'b.id')
+                    ->where('setting.name', 'top_performer_order')
+                    ->where('tag', 'dashboard_setting');
+            })
             ->select(
                 'c.company_id',
                 'c.first_name',
@@ -446,6 +453,7 @@ class IndividualPerformanceController extends Controller
                 'b.metric_name',
                 'b.id as metric_id',
                 'b.goal',
+                'setting.value',
                 DB::raw('SUM(a.value) as total_score'),
                 DB::raw('AVG(a.value) as average')
             )
@@ -465,6 +473,7 @@ class IndividualPerformanceController extends Controller
                     'metric_name' => $result->metric_name,
                     'metric_id' => $result->metric_id,
                     'goal' => $result->goal,
+                    'setting' => $request->value,
                     'top_five_performers' => [],
                 ];
             }
@@ -480,9 +489,15 @@ class IndividualPerformanceController extends Controller
 
         // Limit to top five performers for each metric
         foreach ($top_performers as &$top_performer) {
-            usort($top_performer['top_five_performers'], function ($a, $b) {
-                return $b['total_score'] <=> $a['total_score'];
-            });
+            if ($top_performer['setting'] != 'ASC') {
+                usort($top_performer['top_five_performers'], function ($a, $b) {
+                    return $b['total_score'] <=> $a['total_score'];
+                });
+            } else {
+                usort($top_performer['top_five_performers'], function ($a, $b) {
+                    return $a['total_score'] <=> $b['total_score'];
+                });
+            }
             $top_performer['top_five_performers'] = array_slice($top_performer['top_five_performers'], 0, 5);
         }
 
@@ -698,6 +713,12 @@ class IndividualPerformanceController extends Controller
         $results = DB::table('individual_performance_user_metrics as a')
             ->join('individual_performance_metrics as b', 'a.individual_performance_metric_id', '=', 'b.id')
             ->join('users as c', 'a.user_id', '=', 'c.id')
+            ->leftJoin('metric_settings as setting', function ($join) {
+                // GET SORTING SETTINGS
+                $join->on('setting.individual_performance_metric_id', '=', 'b.id')
+                    ->where('setting.name', 'top_performer_order')
+                    ->where('tag', 'dashboard_setting');
+            })
             ->select(
                 'c.company_id',
                 'c.first_name',
@@ -705,6 +726,7 @@ class IndividualPerformanceController extends Controller
                 'b.metric_name',
                 'b.id as metric_id',
                 'b.goal',
+                'setting.value',
                 DB::raw('SUM(a.value) as total_score'),
                 DB::raw('AVG(a.value) as average')
             )
@@ -724,6 +746,7 @@ class IndividualPerformanceController extends Controller
                     'metric_name' => $result->metric_name,
                     'metric_id' => $result->metric_id,
                     'goal' => $result->goal,
+                    'setting' => $result->value,
                     'top_five_performers' => [],
                 ];
             }
@@ -739,11 +762,20 @@ class IndividualPerformanceController extends Controller
 
         // Limit to top five performers for each metric
         foreach ($top_performers as &$top_performer) {
-            usort($top_performer['top_five_performers'], function ($a, $b) {
-                return $b['total_score'] <=> $a['total_score'];
-            });
+            /**CONDITION IF ASC OR DESC*/
+            if ($top_performer['setting'] != 'ASC') {
+                usort($top_performer['top_five_performers'], function ($a, $b) {
+                    return $b['total_score'] <=> $a['total_score'];
+                });
+            } else {
+                usort($top_performer['top_five_performers'], function ($a, $b) {
+                    return $a['total_score'] <=> $b['total_score'];
+                });
+            }
+
             $top_performer['top_five_performers'] = array_slice($top_performer['top_five_performers'], 0, 5);
         }
+
 
 
 
@@ -770,8 +802,23 @@ class IndividualPerformanceController extends Controller
     public function settings($project_id = null)
     {
         if (!$this->is_admin()) abort(403);
+        $metrics_data = !$project_id ? null : IndividualPerformanceMetric::where('project_id', $project_id)->orderBy('position', 'asc')->get();
+        collect($metrics_data ?? [])->each(function ($data) {
+            $setting = $data->setting('dashboard_setting', 'top_performer_order')->first();
+            if ($setting == null) {
+                $setting = new MetricSettings();
+                $setting->id = 0;
+                $setting->individual_performance_metric_id = 0;
+                $setting->name = 'top_performer_order';
+                $setting->value = 'DESC';
+                $setting->tag = 'dashboard_setting';
+                $data->setting = $setting;
+            } else {
+                $data->setting = $setting;
+            }
+        });
         return Inertia::render('IndividualPerformanceSettings', [
-            'metrics' => !$project_id ? null : IndividualPerformanceMetric::where('project_id', $project_id)->orderBy('position', 'asc')->get(),
+            'metrics' => $metrics_data,
             'project' => $project_id ? Project::findOrFail($project_id) : null
         ]);
     }
@@ -793,7 +840,7 @@ class IndividualPerformanceController extends Controller
         if ($request->format == 'duration' && $request->unit == 'Hours') $duration = $request->goal * 60.00;
 
         // Set goal with 15 decimal places in order to preserve value precision for accuracy conversion. Commented By Josh
-        IndividualPerformanceMetric::create([
+        $metric = IndividualPerformanceMetric::create([
             'project_id' => $request->project_id,
             'user_id' => Auth::id(),
             'metric_name' => $request->metric_name,
@@ -802,6 +849,8 @@ class IndividualPerformanceController extends Controller
             'unit' => $request->unit,
             'rate_unit' => $request->rate_unit
         ]);
+        /**Update or Create Metric Settings*/
+        self::SaveMetricSetting($request, $metric->id);
         return redirect()->back();
     }
 
@@ -830,7 +879,34 @@ class IndividualPerformanceController extends Controller
             'unit' => $request->unit,
             'rate_unit' => $request->rate_unit
         ]);
+        /**Update or Create Metric Settings*/
+        self::SaveMetricSetting($request, $metric->id);
         return redirect()->back();
+    }
+
+    public function SaveMetricSetting(Request $request, $id)
+    {
+        $request->merge([
+            'setting' => array_merge($request->input('setting', []), [
+                'individual_performance_metric_id' => $id,
+            ]),
+        ]);
+        $validatedData = $request->validate([
+            'setting.name' => 'required|string',
+            'setting.individual_performance_metric_id' => 'required',
+            'setting.tag' => 'required|string',
+            'setting.value' => 'required|string',
+        ]);
+
+        $metric = IndividualPerformanceMetric::findOrFail($id);
+        $hasSettings = $metric->setting('dashboard_setting', 'top_performer_order')->exists();
+        if (!$hasSettings) {
+            MetricSettings::create($validatedData['setting']);
+        } else {
+            $setting = $metric->setting('dashboard_setting', 'top_performer_order')->first();
+            $setting->value = $validatedData['setting']['value'];
+            $setting->save();
+        }
     }
 
     /**JOSH - ADDED SAVE COLUMN REODERING*************************************************************/

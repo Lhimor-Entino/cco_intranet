@@ -1,3 +1,6 @@
+import { PageProps } from "@/types";
+import { Page } from "@inertiajs/inertia";
+import { usePage } from "@inertiajs/inertia-react";
 import { type ClassValue, clsx } from "clsx"
 import { DateRange } from "react-day-picker";
 import { twMerge } from "tailwind-merge"
@@ -106,3 +109,41 @@ export const isInSecondsOrMinutes = (unit:string,daily_goal:string) => {
 export const roundWithFormat = (value:number,decimal:number = 0) => {
   return (Math.round(value * 100) / 100).toFixed(decimal);
 }
+
+export const isTeamLead = () => {
+  const {user} = usePage<Page<PageProps>>().props.auth;
+  if(user=== null) {return false;}
+
+  return user.position == 'TEAM LEADER' ||
+      user.position == 'TEAM LEADER 1' ||
+      user.position == 'TEAM LEADER 2' ||
+      user.position == 'TEAM LEADER 3' ||
+      user.position == 'TEAM LEADER 4' ||
+      user.position == 'TEAM LEADER 5' ||
+      user.position == 'TEAM LEADER 6' ||
+      user.position == 'TEAM LEAD' ||
+      user.position == 'TEAM LEAD 1' ||
+      user.position == 'TEAM LEAD 2' ||
+      user.position == 'TEAM LEAD 3' ||
+      user.position == 'TEAM LEAD 4' ||
+      user.position == 'TEAM LEAD 5' ||
+      user.position == 'TEAM LEAD 6' 
+    
+};
+
+export const hasTeam = () => {
+  const {user} = usePage<Page<PageProps>>().props.auth;
+  if(user=== null) {return false;}
+  return !!user.team && !!user?.team_id;
+}
+
+export const isAdmin = () => {
+  const {user} = usePage<Page<PageProps>>().props.auth;
+  if(user=== null) {return false;}
+  return user.position == 'PROGRAMMER' ||
+  user.position == 'OPERATIONS MANAGER' ||
+  user.position == 'GENERAL MANAGER' ||
+  user.position == 'OPERATIONS SUPERVISOR' 
+  user.position == 'OPERATIONS SUPERVISOR 2' 
+  user.position == 'QUALITY ASSURANCE AND TRAINING SUPERVISOR' 
+};

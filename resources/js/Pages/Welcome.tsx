@@ -73,11 +73,12 @@ export type NavLink = {
         name:string;
         href:string;
         quick?:boolean;
+        accessible:boolean
     }[];
 }
 
 
-export const NavItems:NavLink[] = [
+export const NavItems = (isAdmin = false, isTeamLead = false): NavLink[]  => [
     {
         id: 1,
         Icon: GaugeIcon,
@@ -86,42 +87,51 @@ export const NavItems:NavLink[] = [
             {
                 name: "Project Knowledge Base",
                 href: "#",
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
-                name: "Individual Performance Dashboard",
-                href: route('individual_performance_dashboard.index'),
-                quick:true
+                name: "Performance Dashboard",
+                href: (isAdmin || isTeamLead) ?  route('individual_performance_dashboard.team') : route('individual_performance_dashboard.index') ,
+                quick:true,
+                accessible: true,
             },
             {
                 name: "Client and Internal Escalation Records",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Attendance Management System",
                 href: route('attendance.index'),
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
                 name: "Leave planner",
                 href: route('hrms.leave_planner'),
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
                 name: "Quality Management System",
                 href: "#",
+                accessible: true,
             },
             {
                 name: "Reliability Management System",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Connect: Coaching Tool",
                 href: "#",
+                accessible: true,
             },
             {
                 name: "Key Performance Indicators Records per Project and Trending Report",
-                href: "#"
+                href: "#",
+                accessible: true,
             }
         ]
     },
@@ -133,40 +143,49 @@ export const NavItems:NavLink[] = [
             {
                 name: "Training Information System",
                 href: route('training_info_system.index'),
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
                 name: "CCO Manhour/Billing Report",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "CCO Code of Descipline",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Employee Information Records",
                 href: route('employee.index'),
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
                 name: "Incentive Reports",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Memorandum/Code of Descipline Infractions record",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Coaching logs/Performance Evaluations",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "CCO Attrition Report",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Shrink Tracker (VLs, SLs, OOO)",
-                href: "#"
+                href: "#",
+                accessible: true,
             }
         ]
     },
@@ -178,19 +197,23 @@ export const NavItems:NavLink[] = [
             {
                 name: "Company Information",
                 href: "#",
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
                 name: "Hardware and Capacity Monitoring",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "Company perks (DDC Mart, DDC Care, etc.)",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "BCP protocols",
-                href: "#"
+                href: "#",
+                accessible: true,
             }
         ]
     },
@@ -202,15 +225,18 @@ export const NavItems:NavLink[] = [
             {
                 name: "CCO and other departments job postings",
                 href: "#",
-                quick:true
+                quick:true,
+                accessible: true,
             },
             {
                 name: "CCO reminders and announcements",
-                href: "#"
+                href: "#",
+                accessible: true,
             },
             {
                 name: "CCO Employee engagement records and documentation",
-                href: "#"
+                href: "#",
+                accessible: true,
             }
         ]
     }
