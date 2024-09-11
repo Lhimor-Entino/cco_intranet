@@ -2,14 +2,14 @@ import Header from '@/Components/Header';
 import Layout from '@/Components/Layout/Layout';
 import { PageProps, Project, User } from '@/types';
 import { Head, usePage } from '@inertiajs/inertia-react';
-import React, {FC, useEffect, useState} from 'react';
+import React, {FC, useEffect, useMemo, useState} from 'react';
 import IPDDropdown from './IndividualPerformance/IPDDropdown';
 import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionComboBox';
 import { Inertia, Page } from '@inertiajs/inertia';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { Input } from '@/Components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, convertToTimezone } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ArrowBigLeft, ArrowBigRight, CalendarIcon, } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
@@ -33,6 +33,7 @@ const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,proj
     const {projects} = usePage<Page<PageProps>>().props;
     const navigate = (selectedProject:Project) => Inertia.get(route('individual_performance_dashboard.agent.rating',{project_id:selectedProject.id}));
     const {metrics} = project;
+   
     const onSetDate = (date?:Date) => {
         if(!date) return;
         setDate(date);
@@ -42,9 +43,10 @@ const IndividualPerformanceRatingForm:FC<Props> = ({is_admin,is_team_leader,proj
     const [hideSaved, setHideSaved] = useState(false);
     const [showName, setShowName] = useState(true);
     const Icon = !showName ? ArrowBigRight : ArrowBigLeft
-    useEffect(() => {
+    useMemo(() => {
         // Set the date when the component mounts
-        setDate(new Date(date));
+        // setDate(new Date(date));
+        setDate(convertToTimezone(new Date(date + '')));
       }, []);
     return (
         <>
