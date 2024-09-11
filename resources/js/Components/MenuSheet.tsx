@@ -47,13 +47,6 @@ const MenuSheet:FC<Props> = ({children}) => {
                                         <div className='flex flex-col gap-y-2.5'>
                                             {
                                                 navItem.items.map((item) => {
-                                                    // /**MODIFICATION: Change default page list if teamleader (From Individual Into Team Performance Dashboard)**/
-                                                    //    if((isTeamLead() || isAdmin())  && item.href === route('individual_performance_dashboard.index') && item.name === 'Individual Performance Dashboard'){
-                                                    //         item.href = route('individual_performance_dashboard.team');
-                                                    //         item.name = "Team Performance Dashboard";
-                                                    //    }
-                                                    // /**END**/
-
                                                     return (
                                                         <Button onClick={() => item.href !== "#" && Inertia.get(item.href)} disabled={item.href==='#'} variant='outline' key={item.name} className='flex items-center justify-start'>
                                                             <Dot className='h-7 w-7 mr-1.5' />
