@@ -61,13 +61,15 @@ class TeamLeader
             auth()->user()->position == "TEAM LEADER 4" ||
             auth()->user()->position == "TEAM LEADER 5" ||
             auth()->user()->position == "TEAM LEADER 6" ||
+            auth()->user()->position == "TEAM LEADER 7" ||
             auth()->user()->position == "TEAM LEAD" ||
             auth()->user()->position == "TEAM LEAD 1" ||
             auth()->user()->position == "TEAM LEAD 2" ||
             auth()->user()->position == "TEAM LEAD 3" ||
             auth()->user()->position == "TEAM LEAD 4" ||
             auth()->user()->position == "TEAM LEAD 5" ||
-            auth()->user()->position == "TEAM LEAD 6"
+            auth()->user()->position == "TEAM LEAD 6" ||
+            auth()->user()->position == "TEAM LEAD 7"
         ) {
             return $next($request);
         }

@@ -473,7 +473,7 @@ class IndividualPerformanceController extends Controller
                     'metric_name' => $result->metric_name,
                     'metric_id' => $result->metric_id,
                     'goal' => $result->goal,
-                    'setting' => $request->value,
+                    'setting' => $result->value ?? 'DESC',
                     'top_five_performers' => [],
                 ];
             }
@@ -486,6 +486,7 @@ class IndividualPerformanceController extends Controller
                 'average' => $result->average,
             ];
         }
+
 
         // Limit to top five performers for each metric
         foreach ($top_performers as &$top_performer) {
@@ -500,6 +501,7 @@ class IndividualPerformanceController extends Controller
             }
             $top_performer['top_five_performers'] = array_slice($top_performer['top_five_performers'], 0, 5);
         }
+
 
         if ($this->is_team_lead()) {
             $current_user = Auth::user();
@@ -746,7 +748,7 @@ class IndividualPerformanceController extends Controller
                     'metric_name' => $result->metric_name,
                     'metric_id' => $result->metric_id,
                     'goal' => $result->goal,
-                    'setting' => $result->value,
+                    'setting' => $result->value ?? 'DESC',
                     'top_five_performers' => [],
                 ];
             }
@@ -1047,12 +1049,14 @@ class IndividualPerformanceController extends Controller
             $user->position == 'TEAM LEADER 4' ||
             $user->position == 'TEAM LEADER 5' ||
             $user->position == 'TEAM LEADER 6' ||
+            $user->position == 'TEAM LEADER 7' ||
             $user->position == 'TEAM LEAD 1' ||
             $user->position == 'TEAM LEAD 2' ||
             $user->position == 'TEAM LEAD 3' ||
             $user->position == 'TEAM LEAD 4' ||
             $user->position == 'TEAM LEAD 5' ||
             $user->position == 'TEAM LEAD 6' ||
+            $user->position == 'TEAM LEAD 7' ||
             $user->position == 'TEAM LEAD' ||
             $this->is_admin();
     }

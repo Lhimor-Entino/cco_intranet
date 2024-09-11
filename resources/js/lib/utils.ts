@@ -121,13 +121,15 @@ export const isTeamLead = () => {
       user.position == 'TEAM LEADER 4' ||
       user.position == 'TEAM LEADER 5' ||
       user.position == 'TEAM LEADER 6' ||
+      user.position == 'TEAM LEADER 7' ||
       user.position == 'TEAM LEAD' ||
       user.position == 'TEAM LEAD 1' ||
       user.position == 'TEAM LEAD 2' ||
       user.position == 'TEAM LEAD 3' ||
       user.position == 'TEAM LEAD 4' ||
       user.position == 'TEAM LEAD 5' ||
-      user.position == 'TEAM LEAD 6' 
+      user.position == 'TEAM LEAD 6' ||
+      user.position == 'TEAM LEAD 7'
     
 };
 

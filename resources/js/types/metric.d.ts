@@ -73,5 +73,6 @@ export type TopPerformer = {
     metric_name:string;
     metric_id:number;
     goal:number;
+    setting:string;
     top_five_performers:TopFivePerformer[];
 }
