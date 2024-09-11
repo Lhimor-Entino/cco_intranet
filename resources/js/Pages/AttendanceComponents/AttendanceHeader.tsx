@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { PageProps, User } from "@/types";
 import { Inertia, Page } from "@inertiajs/inertia";
 import { usePage } from "@inertiajs/inertia-react";
+import { Separator } from "@radix-ui/react-select";
 import { addDays, addYears, format } from "date-fns";
 import {  CalendarClockIcon, CalendarIcon, Check, ChevronsUpDownIcon, FileSpreadsheet, GanttChart, RefreshCw, SearchIcon, SlidersHorizontal, UserIcon, XIcon } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useEffect, useState } from "react";
@@ -84,45 +85,49 @@ const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter
                                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="p-0 max-h-72">
-                                    <Command>
-                                        <Input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search Supervisor/Head..." />
-                                        
-                                        <CommandGroup>
-                                            {head > 0 && (<Button 
-                                                onClick={() => setHead(0)}
-                                                className='w-full fkex items-center justify-start'
-                                                variant='ghost'
-                                                size='sm'> 
-                                                <XIcon className="h-4 w-4 mr-2" />
-                                                Clear Filter
-
-                                            </Button>)}
-
-                                            {(filteredEmployees || []).map((employee) => (
-                                                <Button
-                                                    key={employee.id}
-                                                    onClick={() => {
-                                                        setHead(employee.id);
-                                                        setOpen(false);
-                                                    }}
+                                <PopoverContent className="w-56 "  >
+                                    <div className="sticky top-0 z-10 w-full">
+                                        <Input  value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search Supervisor/Head..." />
+                                    </div>
+                                    <Separator />
+                                    <div className="max-h-[23rem] overflow-auto">
+                                        <Command >
+                                            <CommandGroup>
+                                                {head > 0 && (<Button 
+                                                    onClick={() => setHead(0)}
                                                     className='w-full fkex items-center justify-start'
                                                     variant='ghost'
-                                                    size='sm'
-                                                >
-                                            
-                                                    <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        (head === employee.id) ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                    />
-                                                    {`${employee.first_name} ${employee.last_name}`}
+                                                    size='sm'> 
+                                                    <XIcon className="h-4 w-4 mr-2" />
+                                                    Clear Filter
+
+                                                </Button>)}
+
+                                                {(filteredEmployees || []).map((employee) => (
+                                                    <Button
+                                                        key={employee.id}
+                                                        onClick={() => {
+                                                            setHead(employee.id);
+                                                            setOpen(false);
+                                                        }}
+                                                        className='w-full fkex items-center justify-start'
+                                                        variant='ghost'
+                                                        size='sm'
+                                                    >
                                                 
-                                                </Button>
-                                            ))}
-                                        </CommandGroup>
-                                    </Command>
+                                                        <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            (head === employee.id) ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                        />
+                                                        {`${employee.first_name} ${employee.last_name}`}
+                                                    
+                                                    </Button>
+                                                ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </div>
                                 </PopoverContent>
                             </Popover>
                         </>
