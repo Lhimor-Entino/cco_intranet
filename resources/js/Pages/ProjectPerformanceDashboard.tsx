@@ -125,7 +125,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                         <Accordion defaultValue={['averages','trends','tops']} type='multiple' className="w-full">                                    
                                             <AccordionItem value='averages'>
                                                 <AccordionTrigger className='text-lg font-bold tracking-tight'>
-                                                    {`${!ownProject?project.name:"My Project"}'s`} Averages from {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
+                                                    {`${!ownProject?project.name:"My Project"}'s`} Averages from {`${convertToTimezone(new Date(date_range.from + ''))} to ${convertToTimezone(new Date(date_range.to + ''))}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
                                                     {((breakdown || []).length > 0? 
@@ -146,7 +146,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                             </AccordionItem>
                                             <AccordionItem value='trends'>
                                                 <AccordionTrigger className='text-lg font-bold tracking-tight'>
-                                                    {`${ownProject?"My Project":project.name}'s`} Average Daily Trends from {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
+                                                    {`${ownProject?"My Project":project.name}'s`} Average Daily Trends from {`${format(convertToTimezone(new Date(date_range.from + '')),'PP')} to ${format(convertToTimezone(new Date(date_range.to + '')),'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
                                                     {( (formattedTrends || []).length > 0? 
@@ -168,7 +168,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                             </AccordionItem>
                                             <AccordionItem value='tops'>
                                                 <AccordionTrigger className='text-lg font-bold tracking-tight'>
-                                                    {`${ownProject?"My Team":project.name}'s`} Top Performers {`${format(date_range.from,'PP')} to ${format(date_range.to,'PP')}`}
+                                                    {`${ownProject?"My Team":project.name}'s`} Top Performers {`${format(convertToTimezone(new Date(date_range.from + '')),'PP')} to ${format(convertToTimezone(new Date(date_range.to + '')),'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
                                                     {((top_performers || []).length > 0? 

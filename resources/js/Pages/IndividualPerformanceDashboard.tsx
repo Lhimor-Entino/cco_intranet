@@ -75,7 +75,6 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
         if(!selectedUser) return toast.error('Please select an agent');
         if(!initialDate) return toast.error('Please select a date range or pick a date');
         const date = parseDateRange(initialDate);
-        console.log('Initial Date: ', date_range, 'Parse Date: ', date);
         Inertia.get(route('individual_performance_dashboard.index',{
             project_id:project.id,
             date,
@@ -169,11 +168,11 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
 
     return (
         <>
-            <Head title="Performance Dashboard" />
+            <Head title="Individual Performance Dashboard" />
             <Layout>
                 <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container pb-2.5 overflow-y-auto'>
                     <div className='md:relative flex flex-row md:flex-col items-center'>
-                        <Header logo='performance' title="Performance Dashboard" />                        
+                        <Header logo='performance' title="Individual Performance Dashboard" />                        
                         <IPDDropdown project_id={project.id} isTeamLead={is_team_leader} isAdmin={is_admin} className='md:absolute md:right-0 md:top-[0.7rem] !ring-offset-background focus-visible:!outline-none'  />
                     </div>                
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
@@ -229,7 +228,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                 <Accordion defaultValue='averages' type='single' collapsible className="w-full">                                    
                                     <AccordionItem value='averages'>
                                         <AccordionTrigger className='text-lg font-bold tracking-tight'>
-                                            {`${!isSelf?'Agent':'My'}`} Averages from {format(date_range.from,'PP')} to {format(date_range.to,'PP')}
+                                            {`${!isSelf?'Agent':'My'}`} Averages from {format(convertToTimezone(new Date(date_range.from + '')),'PP')} to {format(convertToTimezone(new Date(date_range.to + '')),'PP')}
                                         </AccordionTrigger>
                                         <AccordionContent asChild>
                                             {((chartData || []).length > 0? 
@@ -265,7 +264,7 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                 <Accordion  defaultValue='trends' type='single' collapsible className="w-full">                                    
                                     <AccordionItem value='trends'>
                                         <AccordionTrigger className='text-lg font-bold tracking-tight'>
-                                            {`${!isSelf?'Agent':'My'}`} Daily Trends from {format(date_range.from,'PP')} to {format(date_range.to,'PP')}
+                                            {`${!isSelf?'Agent':'My'}`} Daily Trends from {format(convertToTimezone(new Date(date_range.from + '')),'PP')} to {format(convertToTimezone(new Date(date_range.to + '')),'PP')}
                                         </AccordionTrigger>
                                         <AccordionContent asChild>
                                             {((trends || []).length > 0? 
@@ -292,8 +291,8 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                             <div className='h-auto flex items-center justify-between'>
                                                 <Button variant="link" className=' p-0 m-0 flex items-start justify-start text-lg text-left font-bold tracking-tight flex-1'>
                                                     <h3 className='text-lg text-left font-bold'>
-                                                        {`${!isSelf?agentName:'My'} Performance - ${format(date_range.from,'LLL dd, y')}`}
-                                                        {!!date_range.to && ` to ${format(date_range.to,'LLL dd, y')}`}
+                                                        {`${!isSelf?agentName:'My'} Performance - ${format(convertToTimezone(new Date(date_range.from + '')),'LLL dd, y')}`}
+                                                        {!!date_range.to && ` to ${format(convertToTimezone(new Date(date_range.to + '')),'LLL dd, y')}`}
                                                     </h3>
                                                 </Button>
                                                 <div className='ml-auto flex'>
