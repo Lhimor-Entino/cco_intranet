@@ -124,8 +124,8 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                                     <div className='h-auto flex flex-col gap-y-2.5'>
                                         <Accordion defaultValue={['averages','trends','tops']} type='multiple' className="w-full">                                    
                                             <AccordionItem value='averages'>
-                                                <AccordionTrigger className='text-lg font-bold tracking-tight'>
-                                                    {`${!ownProject?project.name:"My Project"}'s`} Averages from {`${convertToTimezone(new Date(date_range.from + ''))} to ${convertToTimezone(new Date(date_range.to + ''))}`}
+                                                <AccordionTrigger className='text-lg font-bold tracking-tight'> 
+                                                    {`${!ownProject?project.name:"My Project"}'s`} Averages from {`${format(convertToTimezone(new Date(date_range.from + '')),'PP')} to ${format(convertToTimezone(new Date(date_range.to + '')),'PP')}`}
                                                 </AccordionTrigger>
                                                 <AccordionContent asChild>
                                                     {((breakdown || []).length > 0? 
