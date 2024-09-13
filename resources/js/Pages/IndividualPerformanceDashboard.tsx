@@ -348,52 +348,6 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                                 </Accordion>
                             </div>
                         )}
-                        {/*This Content was modified into top because of unresponsiveness*/}
-                        {/* <div className='flex-1  flex flex-col gap-y-2.5 overflow-y-auto'>
-                            { !!agent && !!date_range?.from && grouped_metrics && grouped_metrics.length>1 &&(
-                                <>
-                                    <div className='h-auto flex items-center justify-between'>
-                                        <h3 className='text-lg font-bold tracking-tight'>
-                                            {`${!isSelf?agentName:'My'} Performance - ${format(date_range.from,'LLL dd, y')}`}
-                                            {!!date_range.to && ` to ${format(date_range.to,'LLL dd, y')}`}
-                                        </h3>
-                                        <div className='flex'>
-                                            <Button size='sm' variant='outline' className='border-r-0 rounded-r-none' onClick={onShrinkAll}>
-                                                <ShrinkIcon className='h-5 w-5' />
-                                                <span className='ml-2 hidden md:inline'>Shrink All</span>
-                                            </Button>
-                                            <Button size='sm' variant='outline' className='rounded-l-none' onClick={onExpandAll}>
-                                                <span className='mr-2 hidden md:inline'>Expand All</span>
-                                                <ExpandIcon className='h-5 w-5' />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className='overflow-y-auto flex flex-col gap-y-3.5'>
-                                        <Accordion  type="multiple" value={opened} onValueChange={onSetOpened} className="w-full">
-                                            {grouped_metrics.map(group=>(                                        
-                                                <AccordionItem key={group.date} value={group.date}>
-                                                    <AccordionTrigger className='text-lg flex items-center justify-between group'>
-                                                        <div className='flex items-center gap-x-2'>
-                                                            <span>{group.date}</span>
-                                                            {(is_admin||is_team_leader)&&(<Hint label='Edit Agent Metric'>
-                                                                <p role='button' className=' opacity-0 group-hover:opacity-100 transition duration-300' onClick={e=>onSetMetricToEdit(group,e)}>
-                                                                    <Edit className='h-5 w-5 text-primary' />
-                                                                </p>
-                                                            </Hint>)}
-                                                        </div>
-                                                    </AccordionTrigger>
-                                                    <AccordionContent asChild>
-                                                        <div className='gap-5 flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-                                                            {group.metrics.map(userMetric=>  <UserMetricCardItem agent={agent} key={userMetric.id}   userMetric={userMetric} />)}
-                                                        </div>  
-                                                    </AccordionContent>
-                                                </AccordionItem>
-                                            ))}                                        
-                                        </Accordion>
-                                    </div>
-                                </>
-                            )}
-                        </div> */}
                     </div>                    
                 </div>
             </Layout>

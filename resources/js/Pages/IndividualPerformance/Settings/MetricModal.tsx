@@ -101,7 +101,7 @@ const MetricModal:FC<Props> = ({isOpen,onClose,metric,project}) => {
 
     const onSubmit:FormEventHandler<HTMLFormElement> = (e) => {
         e.preventDefault();
-        const href = metric?route('individual_performance_dashboard.update',{metric_id:metric.id}):route('individual_performance_dashboard.store');
+        const href = metric? route('individual_performance_dashboard.update',{metric_id:metric.id}):route('individual_performance_dashboard.store');
         if(data.goal===0 && !noGoal) return toast.error('Goal cannot be zero. Check the "No Daily Goals" checkbox instead.');
         if(data.unit === "") return toast.error('Unit is required');
         if(data.format === 'duration' && (!['Hours','Minutes','Seconds'].includes(data.unit||""))) return toast.error('Select Unit');

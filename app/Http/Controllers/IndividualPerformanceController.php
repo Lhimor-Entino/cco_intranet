@@ -86,12 +86,14 @@ class IndividualPerformanceController extends Controller
             ->when($from && $to, function ($query) use ($from, $to) {
                 $query->whereBetween('date', [$from, $to]);
             })
+            ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->where('individual_performance_user_metrics.user_id', $user->id)
             /**SORT METRICS BY POSITION IN RENDERING DATASET BARCHART Commented By: JOSH**/
             ->join('individual_performance_metrics', 'individual_performance_user_metrics.individual_performance_metric_id', '=', 'individual_performance_metrics.id')
             ->orderBy('individual_performance_metrics.position', 'asc')
             ->get()
             : null;
+        // return response()->json($user_metrics);
         $agent_averages = null;
         $grouped_metrics = [];
         if (isset($user_metrics)) {
@@ -324,7 +326,7 @@ class IndividualPerformanceController extends Controller
             )
             ->get()
             ->toArray();
-
+        // return response()->json($user_breakdown_raw);
         $user_breakdown = [];
         foreach ($user_breakdown_raw as $user) {
             //check if user is already in the array
@@ -511,6 +513,7 @@ class IndividualPerformanceController extends Controller
                         $query->where('id', $current_user->team_id);
                     }
                 })
+                ->orderBy('name')
                 ->get();
         }
 
@@ -523,7 +526,7 @@ class IndividualPerformanceController extends Controller
                 'to' => $to
             ],
             'team' => $team,
-            'teams' => $this->is_admin() ? Team::all() : ($this->is_team_lead() ? $teams : [$team]),
+            'teams' => $this->is_admin() ? Team::orderBy('name')->get() : ($this->is_team_lead() ? $teams : [$team]),
             'agents' => $users,
             'user_breakdown' => $user_breakdown,
             'breakdown' => $breakdown,
@@ -791,7 +794,7 @@ class IndividualPerformanceController extends Controller
                 'to' => $to
             ],
             'project' => $project,
-            'projects' => $this->is_admin() ? Project::all() : [$project],
+            'projects' => $this->is_admin() ? Project::orderBy('name')->get() : [$project],
             'agents' => $users,
             'user_breakdown' => $user_breakdown,
             'breakdown' => $breakdown,
@@ -989,12 +992,14 @@ class IndividualPerformanceController extends Controller
         score:number;
         */
         DB::transaction(function () use ($date, $user_ratings, $user_id) {
+
             foreach ($user_ratings as $rating) {
                 $payload = [
                     "metric_id" => $rating['metric_id'],
                     "user_id" => $user_id,
                     "date" => $date
                 ];
+
                 /**Check User Rate Exist Commented by: JOSH**/
                 $rating['user_metric_id'] = $rating['user_metric_id'] > 0 ? $rating['user_metric_id'] : self::CheckUserMetric($payload);
                 if ($rating['user_metric_id'] == 0) {
@@ -1020,9 +1025,10 @@ class IndividualPerformanceController extends Controller
     /**Check User Rate Exist Commented by: JOSH**/
     public function CheckUserMetric($payload): int
     {
+        $date = Carbon::parse($payload['date'])->format('Y-m-d');
         $isExist = IndividualPerformanceUserMetric::where('individual_performance_metric_id', $payload['metric_id'])
             ->where('user_id', $payload['user_id'])
-            ->where('date', $payload['date'])
+            ->where('date', $date)
             ->pluck('id')
             ->first();
         return $isExist ?? 0;
@@ -1081,6 +1087,7 @@ class IndividualPerformanceController extends Controller
             })
             ->select('projects.*')
             ->groupBy('projects.id')
+            ->orderBy('projects.name')
             ->get();
 
         return $projects;
@@ -1092,7 +1099,9 @@ class IndividualPerformanceController extends Controller
             ->join('users', 'projects.id', '=', 'users.project_id')
             ->orWhereIn('users.team_id', self::LeadedTeams())
             ->orWhere('project_histories.user_id', Auth::user()->id)
-            ->select('projects.*')->groupBy('projects.id')->get();
+            ->select('projects.*')->groupBy('projects.id')
+            ->orderBy('projects.name')
+            ->get();
         return  $projects;
     }
     /**END OF TEAM LEADER'S FUNCTIONS*/
