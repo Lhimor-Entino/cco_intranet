@@ -151,7 +151,7 @@ class IndividualPerformanceController extends Controller
                 $averages[$key]['average'] = $average['total'] / $average['days'];
                 //round to 2 decimal places 
                 $averages[$key]['average'] = round($averages[$key]['average'], 2);
-                $averages[$key]['goal'] =  self::UnitConversion(["unit" => $averages[$key]['unit'], "value" => $averages[$key]['goal']]);
+                // $averages[$key]['goal'] =  self::UnitConversion(["unit" => $averages[$key]['unit'], "value" => $averages[$key]['goal']]);
             }
 
             $agent_averages = $averages;
