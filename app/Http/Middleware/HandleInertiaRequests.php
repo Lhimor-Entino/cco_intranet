@@ -40,19 +40,19 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user()?$request->user()->load(['team']):null,
+                'user' => $request->user() ? $request->user()->load(['team']) : null,
             ],
-            'shifts'=>$request->user()?Shift::all():[],
-            'projects'=>$request->user()?Project::all():[],
-            
-            'teams'=>$request->user()?Team::all():[],
+            'shifts' => $request->user() ? Shift::all() : [],
+            'projects' => $request->user() ? Project::orderBy('name')->get() : [],
+
+            'teams' => $request->user() ? Team::orderBy('name')->get() : [],
             'ziggy' => function () {
                 return (new Ziggy)->toArray();
             },
             'flash' => [
-                'newLink' => fn () => $request->session()->get('newLink')
+                'newLink' => fn() => $request->session()->get('newLink')
             ],
-            'metric_formats'=>['number','percentage','duration','rate']
+            'metric_formats' => ['number', 'percentage', 'duration', 'rate']
         ]);
     }
 }

@@ -91,15 +91,18 @@ class IndividualPerformanceController extends Controller
             /**SORT METRICS BY POSITION IN RENDERING DATASET BARCHART Commented By: JOSH**/
             ->join('individual_performance_metrics', 'individual_performance_user_metrics.individual_performance_metric_id', '=', 'individual_performance_metrics.id')
             ->orderBy('individual_performance_metrics.position', 'asc')
+            ->orderBy('individual_performance_user_metrics.date', 'asc')
             ->get()
             : null;
-        // return response()->json($user_metrics);
+
         $agent_averages = null;
         $grouped_metrics = [];
         if (isset($user_metrics)) {
             foreach ($user_metrics as $metric) {
                 $date = Carbon::parse($metric['date'])->format('Y-m-d');
                 $metric['goal'] = self::UnitConversion(["unit" => $metric['unit'], "value" => $metric['goal']]);
+                //Assigned Converted Goal Unit Duration. I don't know why data has to be nested itself. Commented By Josh
+                $metric['metric']['goal'] = $metric['goal'];
                 $found = false;
 
                 foreach ($grouped_metrics as &$group) {
@@ -118,6 +121,7 @@ class IndividualPerformanceController extends Controller
                 }
             }
         }
+
         if (isset($user_metrics)) {
             $averages = [];
             foreach ($user_metrics as $userMetric) {
