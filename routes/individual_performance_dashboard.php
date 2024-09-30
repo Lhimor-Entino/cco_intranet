@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->name('individual_performance_dashboard.')->prefix('individual-performance-dashboard')->group(function () {
     Route::get('individual-performance/{project_id?}', [IndividualPerformanceController::class, 'index'])->name('index');
-    Route::get('/team-performance/{team_id?}', [IndividualPerformanceController::class, 'team'])->name('team');
+    Route::get('/team-performance/{team_id?}/{project_id?}', [IndividualPerformanceController::class, 'team'])->name('team');
     Route::get('/project-performance/{project_id?}', [IndividualPerformanceController::class, 'project'])->name('project');
     Route::get('/settings/{project_id?}', [IndividualPerformanceController::class, 'settings'])->name('settings');
     Route::post('/store', [IndividualPerformanceController::class, 'store'])->name('store');

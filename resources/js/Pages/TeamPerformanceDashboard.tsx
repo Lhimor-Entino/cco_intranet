@@ -35,9 +35,11 @@ interface Props {
     team_trends:TeamTrend[];
     top_performers: TopPerformer[];
     projects: Project[];
+    team_projects: Project[];
+    project : Project;
 }
 
-const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,teams,team, breakdown,team_trends,top_performers,projects}) => {
+const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,teams,team, breakdown,team_trends,top_performers,projects,team_projects,project}) => {
 
     const {user} = usePage<Page<PageProps>>().props.auth;
     const [date, setDate] = useState<DateRange | undefined>(date_range);
@@ -47,12 +49,13 @@ const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,
         setDate(param);
     },[]);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.team',{team_id:t.id}));
+    const onProjectSelect = (p:Project) => Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id, project_id:p.id}));
     const ownTeam = user.team_id===team.id;
     const navigate = () => {
         const new_date = parseDateRange(date);
         Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id,date:new_date}));
     }
-    const project = projects.find(data => data.id === user.project_id);
+    // const project = projects.find(data => data.id === user.project_id);
     const formattedTrends:Trend[] = useMemo(()=>{
         return team_trends.map(trend=>({
             metricName:trend.metric_name,
@@ -77,8 +80,9 @@ const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
                             <TeamsComboBox teams={teams} onTeamSelect={onTeamSelect} selectedTeam={team} size='sm' />
-                            {/* {(is_admin) && (<><label>Project</label><ProjectSelectionComboBox projects={projects} selectedProject={project} isAdmin={is_admin} onSelectProject={navigate} /></>)} */}
+                            
                             <div className='flex items-center'>
+                                <ProjectSelectionComboBox projects={team_projects} selectedProject={project}  onSelectProject={onProjectSelect} isAdmin/>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Button
@@ -86,7 +90,7 @@ const TeamPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_range,
                                             id="date"
                                             variant={"outline"}
                                             className={cn(
-                                            "w-60 justify-start text-left font-normal rounded-r-none",
+                                            "ml-2 w-60 justify-start text-left font-normal rounded-r-none",
                                             !date && "text-muted-foreground"
                                             )}
                                         >

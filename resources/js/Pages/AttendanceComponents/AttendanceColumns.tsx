@@ -7,7 +7,7 @@ import { useDeleteAnnouncementModal } from "@/Hooks/useDeleteAnnouncementModal"
 import { useEmployeeModal } from "@/Hooks/useEmployeeModal"
 import { useShiftModal } from "@/Hooks/useShiftModal"
 import { useUpdateAttendaceModal } from "@/Hooks/useUpdateAttendaceModal"
-import { cn } from "@/lib/utils"
+import { AttendanceStatus, cn } from "@/lib/utils"
 import { Announcement, PageProps, User } from "@/types"
 import { Inertia, Page } from "@inertiajs/inertia"
 import { usePage } from "@inertiajs/inertia-react"
@@ -53,7 +53,10 @@ export const AttendanceColumns
         id:'Time-in',
         header: ({column})=><Button  className='w-full text-primary px-0'  variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Time In<ChevronsLeftRight className="ml-2 h-4 w-4 rotate-90" /></Button>,
         cell: ({row})=>{
+            const absent_condition = !row.original.attendances[0].time_in && !row.original.attendances[0].time_out && (row.original.attendances[0]?.status_code == 0);
             if(!row.original.attendances[0]) return <p>No Time-in Record</p>
+            if(absent_condition) return <p>No Time-in Record</p>
+            if(!row.original.attendances[0].time_in && !row.original.attendances[0].time_out) return <p>{AttendanceStatus(row.original.attendances[0]?.status_code ?? -1)}</p>
             const editedByMsg = `Edited By: ${row.original.attendances[0].edited_time_in_by?.first_name} ${row.original.attendances[0].edited_time_in_by?.last_name}`;
             const editedByDt = (!!row.original.attendances[0].edited_time_in_date)? ` on ${format(new Date(row.original.attendances[0].edited_time_in_date),'Pp')}`:null;
             return (
@@ -73,7 +76,10 @@ export const AttendanceColumns
         id:'Time-Out',
         header: ({column})=><Button  className='w-full text-primary px-0'  variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Time Out<ChevronsLeftRight className="ml-2 h-4 w-4 rotate-90" /></Button>,
         cell: ({row})=>{
+            const absent_condition = !row.original.attendances[0].time_in && !row.original.attendances[0].time_out && (row.original.attendances[0]?.status_code == 0);
             if(!row.original.attendances[0]) return <p>No Time-out Record</p>
+            if(absent_condition) return <p>No Time-out Record</p>
+            if(!row.original.attendances[0].time_in && !row.original.attendances[0].time_out) return <p>{AttendanceStatus(row.original.attendances[0]?.status_code ?? -2)}</p>
             const editedByMsg = `Edited By: ${row.original.attendances[0].edited_time_out_by?.first_name} ${row.original.attendances[0].edited_time_out_by?.last_name}`;
             const editedByDt = (!!row.original.attendances[0].edited_time_out_date)? ` on ${format(new Date(row.original.attendances[0].edited_time_out_date),'Pp')}`:null;
             return (
@@ -93,7 +99,18 @@ export const AttendanceColumns
         accessorFn: (row)=>row.attendances[0]?.is_tardy||"",
         id:'Tardy',
         header: ({column})=><Button  className='w-full text-primary px-0'  variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>Tardy<ChevronsLeftRight className="ml-2 h-4 w-4 rotate-90" /></Button>,
-        cell: ({row})=><p>{row.original?.attendances[0]?.is_tardy}</p>
+        cell: ({row})=>{
+            const absent_condition = !row.original.attendances[0].time_in && !row.original.attendances[0].time_out && (row.original.attendances[0]?.status_code == 0);
+            const tardy_val = row.original?.attendances[0]?.is_tardy;
+            if(absent_condition) return <p>No Time/Absent</p>
+            if(row.original?.attendances[0]?.is_tardy && tardy_val !== 'No Time In/Absent')
+            {
+                return  <p>{row.original?.attendances[0]?.is_tardy}</p>
+            } else {
+                return <p>{AttendanceStatus(row.original.attendances[0]?.status_code ?? -3)}</p>
+            }
+           
+        }
     },
     {
         header:({column})=><div className="text-primary w-full text-center">Actions</div>,

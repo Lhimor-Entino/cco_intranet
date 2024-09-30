@@ -47,7 +47,8 @@ class AttendanceController extends Controller
             'date' => Carbon::parse($date),
             'user_id' => $user_id,
             'time_in' => $request->time_in,
-            'time_out' => $request->time_out
+            'time_out' => $request->time_out,
+            'status_code' => $request->status
         ]);
         if ($request->time_in) {
             $user_attendance->update([
@@ -150,6 +151,7 @@ class AttendanceController extends Controller
             $dates[] = $start_date;
             $start_date = date("Y-m-d", strtotime("+1 day", strtotime($start_date)));
         }
+
         foreach ($dates as $date) {
             $attendaces = UserAttendance::with(['user', 'user.shift'])->where('date', $date)->get();
             if (count($attendaces) < 1) {
@@ -169,21 +171,33 @@ class AttendanceController extends Controller
 
                 DB::transaction(function () use ($response, $date) {
                     foreach ($response as $res) {
-                        UserAttendance::firstOrCreate([
-                            'user_id' => User::withoutGlobalScope('is_archived')->where('company_id', $res['id_number'])->first()->id,
+                        // Modified Avoid Excessive Queries
+                        $user = User::withoutGlobalScope('is_archived')->where('company_id', $res['id_number'])->select('id', 'shift_id')->first();
+                        // firstOrCreate
+                        $ua =  UserAttendance::firstOrCreate([
+                            'user_id' => $user->id,
                             'date' => $date
                         ], [
                             //set as null if either starts with 0000-00-00
-                            'shift_id' => User::withoutGlobalScope('is_archived')->where('company_id', $res['id_number'])->first()->shift_id,
+                            'shift_id' => $user->shift_id,
                             'time_in' => $res['time_in'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_in']),
-                            'time_out' => $res['time_out'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_out'])
+                            'time_out' => $res['time_out'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_out']),
+                            'status_code' => $res['status']
                         ]);
+                        if ($ua) {
+                            $ua->update([
+                                'shift_id' => $user->shift_id,
+                                'time_in' => $res['time_in'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_in']),
+                                'time_out' => $res['time_out'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_out']),
+                                'status_code' => $res['status']
+                            ]);
+                        }
                     }
                 });
             }
         }
         return User::withoutGlobalScope('is_archived')->with(['attendances' => function ($q) use ($from, $to) {
-            $q->whereBetween('date', [$from, $to]);
+            $q->whereBetween('date', [$from, $to])->orderBy('date');
         }, 'attendances.shift'])->where('department', '<>', 'SOFTWARE')->get();
     }
 }

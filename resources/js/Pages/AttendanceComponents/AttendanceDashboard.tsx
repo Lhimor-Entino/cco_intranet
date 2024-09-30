@@ -1,3 +1,4 @@
+import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { ScrollArea } from '@/Components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -15,12 +16,13 @@ interface Props {
     users:User[];
     dt:string;
     loading?:boolean;
+    redirectShift: (id:string) => void;
 }
 
 
 
 
-const AttendanceDashboard:FC<Props> = ({users,dt,loading}) => {
+const AttendanceDashboard:FC<Props> = ({users,dt,loading,redirectShift}) => {
     const getServerTime = axios.get(route('api.get_server_time')).then((res:{data:string}) => res.data);
     
     const { isLoading, isError, data, error } =useQuery(['get_server_time'], ()=>getServerTime,{refetchInterval: 60000});
@@ -98,6 +100,7 @@ const AttendanceDashboard:FC<Props> = ({users,dt,loading}) => {
                         <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
                             {shifts.map(shift=>(
                                 <BreakdownBlock
+                                    redirectShift={(id:string) => {redirectShift(id)}}
                                     serverTime={data}
                                     shift={shift}
                                     key={shift.id}
@@ -105,9 +108,11 @@ const AttendanceDashboard:FC<Props> = ({users,dt,loading}) => {
                                     total={users.filter(user=>user.shift_id===shift.id).length}
                                     present={users.filter(user=>user.shift_id===shift.id).filter(user=>!!user.attendances[0]?.time_in).length}
                                     absent={users.filter(user=>user.shift_id===shift.id).filter(user=>!user.attendances[0]?.time_in).length}
+                                  
                                     />                     
                             ))}
                             <BreakdownBlock 
+                                redirectShift={(id:string) => {redirectShift(id)}}
                                 serverTime={data}
                                 label='No Shift Schedule'
                                 total={users.filter(user=>!user.shift_id).length}
@@ -154,8 +159,9 @@ interface BreakdownBlockProps{
     absent:number;
     shift?:Shift;
     serverTime?:string;
+    redirectShift:(id:string) => void;
 }
-const BreakdownBlock:FC<BreakdownBlockProps> = ({label,total,present,absent,shift,serverTime}) =>{
+const BreakdownBlock:FC<BreakdownBlockProps> = ({label,total,present,absent,shift,serverTime,redirectShift}) =>{
     
     if(!serverTime) return null;
     
@@ -172,7 +178,7 @@ const BreakdownBlock:FC<BreakdownBlockProps> = ({label,total,present,absent,shif
             <div className='flex flex-col gap-y-1.5 text-muted-foreground font-light'>
                 <div className='w-full flex items-center justify-between '>
                     <p>Total:</p>
-                    <p>{total}</p>
+                    <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0")}} className="p-0 m-0" size={'sm'} variant="link">{total}</Button></p>
                 </div>
                 <div className='w-full flex items-center justify-between'>
                     <p>Present:</p>

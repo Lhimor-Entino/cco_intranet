@@ -34,10 +34,11 @@ Route::middleware('api')->get('/get_server_time', function (Request $request) {
 Route::middleware('api')->post('/attendance/', function (Request $request) {
     $search = $request->search;
     $dt = !$search ? Carbon::now()->format('Y-m-d') : Carbon::parse($search)->format('Y-m-d');
+
     $cco_users = User::select('company_id', 'id', 'shift_id')->where('department', '<>', 'SOFTWARE')->get();
     $ids = $cco_users->pluck('company_id');
-    foreach ($cco_users as $cco_user) {
 
+    foreach ($cco_users as $cco_user) {
         $ua = UserAttendance::firstOrCreate([
             'user_id' => $cco_user['id'],
             'date' => $dt
@@ -48,7 +49,6 @@ Route::middleware('api')->post('/attendance/', function (Request $request) {
             ]);
         }
     }
-
     $config = [
         'token' => 'JIGQ0PAI7AI3D152IOJVM',
         'id_number' => $ids,
@@ -84,6 +84,11 @@ Route::middleware('api')->post('/attendance/', function (Request $request) {
                         'time_out' => $res['time_out'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_out'])
                     ]);
                 }
+                if ($attendance->status_code != $res['status']) {
+                    $attendance->update([
+                        'status_code' => $res['status'] ?? 0
+                    ]);
+                }
             }
             if (!$attendance) {
                 //$time_in_date = !isTimeBetweenMidnightAnd6AM($res['time_in'])?$dt:Carbon::parse($dt)->subDay()->format('Y-m-d');
@@ -93,7 +98,8 @@ Route::middleware('api')->post('/attendance/', function (Request $request) {
                     'user_id' => $user_id,
                     'date' => $dt,
                     'time_in' => $res['time_in'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_in']),
-                    'time_out' => $res['time_out'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_out'])
+                    'time_out' => $res['time_out'] == '0000-00-00 00:00:00' ? null : Carbon::parse($res['time_out']),
+                    'status_code' => $res['status']
                 ]);
             }
         }

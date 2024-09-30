@@ -23,13 +23,13 @@ class AnnouncementSeeder extends Seeder
             null
         ];
         $faker = Factory::create();
-        for($i=0; $i<28; $i++){
+        for ($i = 0; $i < 28; $i++) {
             Announcement::create([
                 'title' => $faker->sentence(),
                 'content' => $faker->paragraph(),
                 'user_id' => User::all()->random()->id,
                 'image' => $faker->randomElement($images),
-                'status'=>1
+                'status' => 1
             ]);
         }
     }

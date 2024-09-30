@@ -1,7 +1,7 @@
 import {FC, ReactNode, useEffect, useMemo, useState} from 'react';
 import { NavItems } from '@/Pages/Welcome';
 import { Button } from './ui/button';
-import { CircleUserRound,  ClockIcon,  KeyRound,  MenuIcon, MoreVerticalIcon, SettingsIcon, ShieldAlertIcon, Users2Icon } from 'lucide-react';
+import { CircleUserRound,  Clock,  ClockIcon,  Globe,  KeyRound,  MenuIcon, MoreVerticalIcon, SettingsIcon, ShieldAlertIcon, Users2Icon } from 'lucide-react';
 import MenuSheet from './MenuSheet';
 import { useAuthModal } from '@/Hooks/useAuthModal';
 import { Link, usePage } from '@inertiajs/inertia-react';
@@ -14,7 +14,7 @@ import { useProjectSettingsModal } from '@/Hooks/useProjectSettingsModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { useShiftSettingsModal } from '@/Hooks/useShiftSettingsModal';
 import DebugLoginModal from './ProgrammerSettings/DebugLoginModal';
-import { isAdmin, isTeamLead } from '@/lib/utils';
+import { isAdmin, isTeamLead, timeZonesWithOffsets } from '@/lib/utils';
 
 interface Props {
     title?:string;
@@ -60,7 +60,33 @@ const Navbar:FC<Props> = ({title}) => {
                             </div>
                         </Link>
                     </div>
+                   
                     <div className='flex  gap-x-2.5 items-center justify-center'>
+                        {/* Timezone List */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size='sm' variant='ghost'>
+                                    <Globe className="h-4 w-4 mr-2" />
+                                    Asia / Manila
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Time Zone</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <div className='max-h-[23rem] overflow-auto'>
+                                    {
+                                        (timeZonesWithOffsets() || []).map((timezone) => {
+                                            return  <DropdownMenuGroup key={timezone.name}> 
+                                                        <DropdownMenuItem key={timezone.name + timezone.offset}>
+                                                            <Clock className="h-4 w-4 mr-2" /> {timezone.name}
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuGroup>  
+                                        })
+                                    } 
+                                </div>
+                               
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         {user&&user.has_settings_access&&(
                             <Settings onShowDebugLoginModal={()=>setShowDebugLoginModal(true)}>
                                 <Button className='rounded-full' variant='ghost' size='icon'>

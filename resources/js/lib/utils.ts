@@ -74,13 +74,15 @@ export const setTimeZone = (date : Date) => {
 export const parseDateRange = (d:DateRange | undefined):{from:string | null; to: string | null} => {
   const from = setTimeZone(new Date(d?.from + '')); //new Date(d?.from + '').toLocaleDateString();
   const to = d?.to ? setTimeZone(new Date(d?.to + '')) : null; //new Date(d?.to + '').toLocaleDateString() : null;
-  const formatDate = (dateStr: string | null) => {
-      if(!dateStr){return null}
-      const [month, day, year] = dateStr.split('/');
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }; 
   return {from:formatDate(from), to: formatDate(to)};
 }
+
+export const formatDate = (dateStr: string | null) => {
+  if(!dateStr){return null}
+  const [month, day, year] = dateStr.split('/');
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
 // Utility function to convert a Date object to a specific timezone (adjustment only)
 export const convertToTimezone = (date:Date, offsetHours:number = 8) => {
   // if (!date) return null;
@@ -149,3 +151,62 @@ export const isAdmin = () => {
   user.position == 'OPERATIONS SUPERVISOR 2' 
   user.position == 'QUALITY ASSURANCE AND TRAINING SUPERVISOR' 
 };
+
+export const timeZonesWithOffsets = () => { return [
+  { name: "UTC", offset: 0 },
+  { name: "Etc/UTC", offset: 0 },
+  { name: "America/New_York", offset: -5 }, // Eastern Standard Time (EST)
+  { name: "America/Chicago", offset: -6 }, // Central Standard Time (CST)
+  { name: "America/Denver", offset: -7 }, // Mountain Standard Time (MST)
+  { name: "America/Los_Angeles", offset: -8 }, // Pacific Standard Time (PST)
+  { name: "America/Anchorage", offset: -9 }, // Alaska Standard Time (AKST)
+  { name: "America/Adak", offset: -10 }, // Hawaii-Aleutian Standard Time (HAST)
+  { name: "Pacific/Honolulu", offset: -10 }, // Hawaii Standard Time (HST)
+  { name: "America/Sao_Paulo", offset: -3 }, // Brazil Standard Time (BRT)
+  { name: "America/Argentina/Buenos_Aires", offset: -3 }, // Argentina Standard Time (ART)
+  { name: "Europe/London", offset: 0 }, // Greenwich Mean Time (GMT)
+  { name: "Europe/Paris", offset: 1 }, // Central European Time (CET)
+  { name: "Europe/Berlin", offset: 1 }, // Central European Time (CET)
+  { name: "Europe/Madrid", offset: 1 }, // Central European Time (CET)
+  { name: "Europe/Rome", offset: 1 }, // Central European Time (CET)
+  { name: "Europe/Istanbul", offset: 3 }, // Turkey Time (TRT)
+  { name: "Europe/Moscow", offset: 3 }, // Moscow Standard Time (MSK)
+  { name: "Africa/Cairo", offset: 2 }, // Eastern European Time (EET)
+  { name: "Asia/Beirut", offset: 2 }, // Eastern European Time (EET)
+  { name: "Asia/Jerusalem", offset: 2 }, // Israel Standard Time (IST)
+  { name: "Asia/Riyadh", offset: 3 }, // Arabian Standard Time (AST)
+  { name: "Asia/Dubai", offset: 4 }, // Gulf Standard Time (GST)
+  { name: "Asia/Karachi", offset: 5 }, // Pakistan Standard Time (PKT)
+  { name: "Asia/Kolkata", offset: 5.5 }, // India Standard Time (IST)
+  { name: "Asia/Dhaka", offset: 6 }, // Bangladesh Standard Time (BST)
+  { name: "Asia/Bangkok", offset: 7 }, // Indochina Time (ICT)
+  { name: "Asia/Singapore", offset: 8 }, // Singapore Standard Time (SGT)
+  { name: "Asia/Manila", offset: 8 }, // Philippine Time (PHT)
+  { name: "Asia/Tokyo", offset: 9 }, // Japan Standard Time (JST)
+  { name: "Asia/Seoul", offset: 9 }, // Korea Standard Time (KST)
+  { name: "Australia/Perth", offset: 8 }, // Australian Western Standard Time (AWST)
+  { name: "Australia/Adelaide", offset: 9.5 }, // Australian Central Standard Time (ACST)
+  { name: "Australia/Sydney", offset: 10 }, // Australian Eastern Standard Time (AEST)
+  { name: "Pacific/Auckland", offset: 12 }, // New Zealand Standard Time (NZST)
+  { name: "Pacific/Fiji", offset: 12 }, // Fiji Standard Time (FJT)
+  { name: "Pacific/Tongatapu", offset: 13 }, // Tonga Time (TOT)
+];}
+
+export const AttendanceStatus = (code:number) => {
+
+  const StatusCode = {
+    '-3':"No Time/Absent",
+    '-2':"No Time Out",
+    '-1': "No Time In",
+    0: "No Time In/Out", // This value returns only if there's attendance but no in/out and status 0
+    5: "OFF",
+    1: "ABSENT",
+    4: "HOLIDAY",
+    16: "RESIGNED",
+    20: "PAID OFF", 
+    // 15: "HOLIDAY"
+  }[code] || ""
+
+  return StatusCode;
+  
+}

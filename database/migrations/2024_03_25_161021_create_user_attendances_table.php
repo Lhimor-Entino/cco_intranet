@@ -20,8 +20,8 @@ class CreateUserAttendancesTable extends Migration
             $table->time('time_in')->nullable();
             $table->time('time_out')->nullable();
             $table->tinyInteger('tardy')->default(0);
+            $table->tinyInteger('status_code')->default(0);
             $table->timestamps();
-
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }

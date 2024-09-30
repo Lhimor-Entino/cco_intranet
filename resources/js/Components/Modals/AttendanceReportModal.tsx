@@ -4,20 +4,20 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
-import { cn, ExportToExcel } from "@/lib/utils";
+import { AttendanceStatus, cn, convertToTimezone, ExportToExcel, parseDateRange } from "@/lib/utils";
 import { CalendarIcon, Loader2, ShieldAlertIcon } from "lucide-react";
 import { format, set, addDays } from 'date-fns';
 import { Calendar } from "../ui/calendar";
 import axios from "axios";
 import { toast } from "sonner";
-import { User } from "@/types";
+import { User, UserAttendance } from "@/types";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 
 const AttendanceReportModal:FC = () => {
     const {isOpen,onClose} = useAttendanceReportModal();
     const [loading,setLoading] = useState(false);
-    const [date, setDate] = useState<DateRange | undefined>();
+    const [initialDate, setDate] = useState<DateRange | undefined>();
     const [oldFormat, setOldFormat] = useState(false);
     const disabledDates = {
         from: addDays(new Date(),2),
@@ -26,16 +26,19 @@ const AttendanceReportModal:FC = () => {
     }
 
     const onSubmit = () =>{
-        if(!date?.from) return toast.info('Please select a date range');
-        const fileName = `Attendance Report ${format(date.from,'yyyy-MM-dd')} - ${format(date.to || date.from,'yyyy-MM-dd')}`;
-        const tardyFileName = `Tardyness Report ${format(date.from,'yyyy-MM-dd')} - ${format(date.to || date.from,'yyyy-MM-dd')}`;
-        const incentiveFileName = `Incentive Report ${format(date.from,'yyyy-MM-dd')} - ${format(date.to || date.from,'yyyy-MM-dd')}`;
+        if(!initialDate?.from) return toast.info('Please select a date range');
+        const fileName = `Attendance Report ${format(initialDate.from,'yyyy-MM-dd')} - ${format(initialDate.to || initialDate.from,'yyyy-MM-dd')}`;
+        const tardyFileName = `Tardyness Report ${format(initialDate.from,'yyyy-MM-dd')} - ${format(initialDate.to || initialDate.from,'yyyy-MM-dd')}`;
+        const incentiveFileName = `Incentive Report ${format(initialDate.from,'yyyy-MM-dd')} - ${format(initialDate.to || initialDate.from,'yyyy-MM-dd')}`;
         setLoading(true);
+        // Parse Date TimeZone
+        const parsedDate = parseDateRange(initialDate);
+        const date = {from: convertToTimezone(new Date(parsedDate.from + '')), ...(parsedDate.to && {to:convertToTimezone(new Date(parsedDate.to + ''))})};
+        setDate(date);
         axios.post(route('attendance.generate_report'),{
-            date
+          date
         })
         .then(async(response:{data:User[]})=>{
-            //console.log(response.data);
             if(!oldFormat){
                 const report = await newReportFormat(response.data);
                 const incentiveReport = await formatIncentiveReport(response.data);
@@ -82,18 +85,18 @@ const AttendanceReportModal:FC = () => {
                             variant={"outline"}
                             className={cn(
                             "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground"
+                            !initialDate && "text-muted-foreground"
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date?.from ? (
-                            date.to ? (
+                            {initialDate?.from ? (
+                            initialDate.to ? (
                                 <>
-                                {format(date.from, "LLL dd, y")} -{" "}
-                                {format(date.to, "LLL dd, y")}
+                                {format(initialDate.from, "LLL dd, y")} -{" "}
+                                {format(initialDate.to, "LLL dd, y")}
                                 </>
                             ) : (
-                                format(date.from, "LLL dd, y")
+                                format(initialDate.from, "LLL dd, y")
                             )
                             ) : (
                             <span>Pick a date range</span>
@@ -104,8 +107,8 @@ const AttendanceReportModal:FC = () => {
                         <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={date?.from}
-                            selected={date}
+                            defaultMonth={initialDate?.from}
+                            selected={initialDate}
                             onSelect={setDate}
                             numberOfMonths={1}
                             disabled={disabledDates}
@@ -182,7 +185,7 @@ const formatReport:(data:User[])=>Promise<any[]>= async(data) =>{
                 row.push('0');
             }
             if(!attendance && user.is_archived===1){
-                row.push('Resigned');
+                row.push('RESIGNED');
             }
         });
         return row;
@@ -191,7 +194,7 @@ const formatReport:(data:User[])=>Promise<any[]>= async(data) =>{
 
 }
 
-const formatTardinessReport:(data:User[])=>Promise<any[]>= async(data) =>{
+const formatTardinessReport:(data:User[])=>Promise<any[]>= async(data) => {
     const dates: string[] = data.reduce((acc: string[], curr) => {
         curr.attendances.forEach(attendance => {
             if (!acc.includes(attendance.date)) {
@@ -212,7 +215,7 @@ const formatTardinessReport:(data:User[])=>Promise<any[]>= async(data) =>{
                 row.push('No Time In/Absent');
             }
             if(!attendance && user.is_archived===1){
-                row.push('Resigned');
+                row.push('RESIGNED');
             }
         });
         return row;
@@ -254,61 +257,78 @@ const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
 
     
 
-    
+    const isActive = (user:User, attendance:UserAttendance) => {
+        let response = user.is_archived > 0 ? 'Inactive' : 'Active';
+        const date_attended = new Date(attendance.date);
+        const date_archived = new Date(user.updated_at??"");
+        if(user.is_archived === 1 && !isNaN(date_archived.getTime()) && !isNaN(date_attended.getTime())){
+            response = (date_attended  < date_archived? "Active" : "Inactive");
+        }
+        return response;
+    }
 
-    const header = ['Date','Name','Site','Project','Employee ID','Shift','Time In','Time Out','Tardy','Total Hours','Actual Hours'];
+    const header = ['Active / Inactive','Date','Name','Site','Project','Employee ID','Shift','Time In','Time Out','Tardy','Total Hours','Actual Hours'];
     const rows = data.reduce<any[]>((acc, user) => {
         user.attendances.forEach(attendance => {
             const tIn = () =>{
                 if(attendance.time_in) return attendance.time_in;
-                if(!attendance.time_in && user.is_archived===0) return 'No Time In';
-                if(!attendance.time_in && user.is_archived===1) return 'Resigned';
+                if(!attendance.time_in && !attendance.time_out && user.is_archived===0) return AttendanceStatus(attendance?.status_code ?? -1);
+                if(!attendance.time_in && user.is_archived===1) return 'RESIGNED';
                 return "No Time In";
             }
 
             const tOut = () =>{
                 if(attendance.time_out) return attendance.time_out;
-                if(!attendance.time_out && user.is_archived===0) return 'No Time Out';
-                if(!attendance.time_out && user.is_archived===1) return 'Resigned';
+                if(!attendance.time_in && !attendance.time_out && user.is_archived===0) return AttendanceStatus(attendance?.status_code ?? -2);
+                if(!attendance.time_out && user.is_archived===1) return 'RESIGNED';
                 return "No Time Out";
+                
             }
 
             const isTardy = () =>{
-                if(attendance.is_tardy) return attendance.is_tardy;
-                if(!attendance.is_tardy && user.is_archived===0) return 'No Time In/Absent';
-                if(!attendance.is_tardy && user.is_archived===1) return 'Resigned';
-                return "No Time In/Absent";
+               
+                if(attendance.is_tardy && attendance.is_tardy !== 'No Time In/Absent')   return attendance.is_tardy;
+                if(!attendance.is_tardy && user.is_archived===1) return 'RESIGNED';
+                // return "No Time In/Absent";
+                return AttendanceStatus(attendance?.status_code ?? -3);
             }
 
             const totHrs = () =>{
-                if(!attendance.time_out && !attendance.time_in && user.is_archived===0) return 'No Time In/Out';
-                if(!attendance.time_out && !attendance.time_in && user.is_archived===1) return 'Resigned';
+                // if(!attendance.time_out && !attendance.time_in && user.is_archived===0) return 'No Time In/Out';
+                // if(!attendance.time_out && !attendance.time_in && user.is_archived===1) return 'Resigned';
                 
                 if(attendance.time_out && attendance.time_in){
 
-                    const [tardyH,tardyM,tardyS] = (attendance.is_tardy || '00:00:00').split(':').map(Number);
-                    const realTardySeconds = tardyH * 3600 + tardyM * 60 + tardyS;
-                    const seconds = calculateTotalHours(attendance.time_out,attendance.time_in);
+                    if(!attendance.shift) return "No Shift";
+                    const [tardyH, tardyM, tardyS] = (attendance.is_tardy || '00:00:00').split(':').map((val) => isNaN(Number(val)) ? 0 : Number(val));
+                    const realTardySeconds = (tardyH || 0) * 3600 + (tardyM || 0) * 60 + (tardyS || 0);
+                    const seconds = calculateTotalHours(attendance.time_out, attendance.time_in,attendance.shift.end_time, attendance.shift.start_time);
                     const cappedSeconds = seconds > 32400 ? 32400 : seconds;
-                    const tardySeconds = attendance.shift?.is_swing===1?0:realTardySeconds;
+                    const tardySeconds = attendance.shift?.is_swing === 1 ? 0 : realTardySeconds;
+
                     if(attendance.time_out && attendance.time_in) return secondsToHms((cappedSeconds-tardySeconds));
                 }
                 
-                return "No Time In/Out";
+                 // return "No Time In/Out";
+                return AttendanceStatus(attendance?.status_code ?? 0);
             }
 
-            const actualHrs = () =>{
-                if(!attendance.time_out && !attendance.time_in && user.is_archived===0) return 'No Time In/Out';
-                if(!attendance.time_out && !attendance.time_in && user.is_archived===1) return 'Resigned';
+            const actualHrs = () => {
+                if(!attendance.time_out && !attendance.time_in && user.is_archived===0) return AttendanceStatus(attendance?.status_code ?? -1);
+                if(!attendance.time_out && !attendance.time_in && user.is_archived===1) return 'RESIGNED';
                 
                 if(attendance.time_out && attendance.time_in){
                     const seconds = calculateTotalHours(attendance.time_out,attendance.time_in);
                     if(attendance.time_out && attendance.time_in) return secondsToHms(seconds);
                 }
-                return "No Time In/Out";
+                // return "No Time In/Out";
+                return AttendanceStatus(attendance?.status_code ?? -1);
             }
 
+           
+            // Modify this line to add Active / Inactive based on date effectivity
             const row: string[] = [
+                isActive(user,attendance),
                 attendance.date,
                 `${user.last_name}, ${user.first_name}`,
                 user.site,
@@ -359,39 +379,43 @@ const formatIncentiveReport:(data:User[])=>Promise<any[]>= async(data) =>{
         });
         return acc;
     }, []).sort();
-    const header = ['Name','Site', 'Employee ID', 'Role/Designation', ...dates];
+    const header = ['Active / Inactive', 'Name','Site', 'Employee ID', 'Role/Designation', ...dates];
     const rows = data.map(user => {
-        const row = [ `${user.last_name}, ${user.first_name}`, user.site, user.company_id, user.position];
+        const row = [ `${user.is_archived === 0? 'Active' : 'Inactive'}`,`${user.last_name}, ${user.first_name}`, user.site, user.company_id, user.position];
         dates.forEach(date => {
             const attendance = user.attendances.find(attendance => attendance.date === date);
             const totHrs = () =>{
-                if(!attendance?.time_out && !attendance?.time_in && user.is_archived===0) return 'No Time In/Out';
-                if(!attendance?.time_out && !attendance?.time_in && user.is_archived===1) return 'Resigned';
-                
-                if(attendance?.time_out && attendance?.time_in){
-
-                    const [tardyH,tardyM,tardyS] = (attendance.is_tardy || '00:00:00').split(':').map(Number);
-                    const realTardySeconds = tardyH * 3600 + tardyM * 60 + tardyS;
-                    const seconds = calculateTotalHours(attendance.time_out,attendance.time_in);
+                if(!attendance?.time_out && !attendance?.time_in && user.is_archived===1) return 'RESIGNED';
+                if((!attendance?.time_out || !attendance?.time_in) && user.is_archived===0) return AttendanceStatus(attendance?.status_code ?? -1);
+                if(attendance?.time_out && attendance?.time_in && attendance?.shift){
+                   // Shift Calculate 
+                    const shift_seconds = calculateTotalHours(attendance.shift?.start_time , attendance.shift?.end_time);
+                    
+                    const [tardyH, tardyM, tardyS] = (attendance.is_tardy || '00:00:00').split(':').map((val) => isNaN(Number(val)) ? 0 : Number(val));
+                    const realTardySeconds = (tardyH || 0) * 3600 + (tardyM || 0) * 60 + (tardyS || 0);
+                    const seconds = calculateTotalHours(attendance.time_out, attendance.time_in);
                     const cappedSeconds = seconds > 32400 ? 32400 : seconds;
-                    const tardySeconds = attendance.shift?.is_swing===1?0:realTardySeconds;
-                    if(attendance.time_out && attendance.time_in) return secondsToHms((cappedSeconds-tardySeconds));
+                    const tardySeconds = attendance.shift?.is_swing === 1 ? 0 : realTardySeconds;
+                    if( attendance.time_out && attendance.time_in) return secondsToHms((cappedSeconds-tardySeconds));
                 }
-                
-                return "No Time In/Out";
+                 
+                // return "No Time In/Out";
+                return AttendanceStatus(attendance?.status_code ?? -1);
             }
+            
             if (attendance && !!user.shift) {
-                row.push(totHrs() || 'No Time In/Out');
+                row.push(totHrs() || '');
+            }
+            if(!attendance && user.is_archived===1){
+                row.push('RESIGNED');
             }
             if (attendance && !user.shift) {
                 row.push('Shift Not Set');
             }
             if(!attendance && user.is_archived===0){
-                row.push('No Time In/Out');
+                row.push('');
             }
-            if(!attendance && user.is_archived===1){
-                row.push('Resigned');
-            }
+            
         });
         return row;
     });
@@ -400,34 +424,45 @@ const formatIncentiveReport:(data:User[])=>Promise<any[]>= async(data) =>{
 
 }
 
-const calculateTotalHours = (timeOut:string,timeIn:string):number =>{
+const calculateTotalHours = (timeOut:string,timeIn:string, shiftOut?:string, shiftIn?:string):number =>{
     // Convert each time string to seconds
-    const [hours1, minutes1, seconds1] = timeOut.split(':').map(Number);
-    const [hours2, minutes2, seconds2] = timeIn.split(':').map(Number);
-
-    const timeInSeconds1 = hours1 * 3600 + minutes1 * 60 + seconds1;
-    const timeInSeconds2 = hours2 * 3600 + minutes2 * 60 + seconds2;
-
+    const [hours_out, minutes_out, seconds_out] = timeOut.split(':').map(Number);
+    const [hours_in, minutes_in, seconds_in] = timeIn.split(':').map(Number);
+    let timeOutSeconds = hours_out * 3600 + minutes_out * 60 + seconds_out;
+    let timeInSeconds = hours_in * 3600 + minutes_in * 60 + seconds_in;
     // Calculate the difference in seconds
     let differenceInSeconds;
-    if (timeInSeconds1 < timeInSeconds2) {
-        // If time1 is earlier than time2, assume time1 is on the next day
-        differenceInSeconds = (24 * 3600 - timeInSeconds2) + timeInSeconds1;
+    if (timeOutSeconds < timeInSeconds) {
+        // If time out is earlier than time in, assume time out is on the next day
+        differenceInSeconds = (24 * 3600 - timeInSeconds) + timeOutSeconds;
     } else {
         // Otherwise, just subtract the two times
-        differenceInSeconds = timeInSeconds1 - timeInSeconds2;
+        differenceInSeconds = timeOutSeconds - timeInSeconds;
     }
 
+     //Actual Hours Between Shift Schedule
+     if(shiftOut?.trim() && shiftIn?.trim()){
+        const [hours_sout, minutes_sout, seconds_sout] = shiftOut.split(':').map(Number);
+        const [hours_sin, minutes_sin, seconds_sin] = shiftIn.split(':').map(Number);
+        const shiftOutSeconds = hours_sout * 3600 + minutes_sout * 60 + seconds_sout;
+        const shiftInSeconds = hours_sin * 3600 + minutes_sin * 60 + seconds_sin;
+        const DiffSeconds = (timeInSeconds - shiftInSeconds) + (timeOutSeconds - shiftOutSeconds);
+        return differenceInSeconds - Math.abs(DiffSeconds);
+    }
     // Convert the difference back to hh:mm:ss format
-    
-
     return differenceInSeconds;
 }
 
-const secondsToHms = (d:number) =>{
+const secondsToHms = (d:number) => {
+    // if(d < 0) {
+    //     d = Math.abs(d);
+    // }
+    if (isNaN(d)) {
+        return 'Invalid time'; // Handle invalid input (NaN or negative number)
+    }
     const hours = Math.floor(d / 3600);
-    d %= 3600;
-    const minutes = Math.floor(d / 60);
-    const seconds = d % 60;
+    const remaining =  d % 3600;
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }

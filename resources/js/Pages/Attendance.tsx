@@ -33,7 +33,29 @@ const Attendance:FC<Props> = ({dt}) => {
     const [projectFilterIds,setProjectFilterIds] = useState<string[]>([]);
     const {setAttendanceDate} = useAttendanceDate();
     const [head,setHead] = useState(0);
+    const [isRedirected, setRedirected] = useState(false);
     const updateParentHead = (head:number) => setHead(head);
+    const RedirectShift = (id:string) => {
+        if(isRedirected){
+            setShiftFilter('all');
+        }
+        setShiftFilter(id);
+        setShowDashboard(val => !val);
+        setRedirected(val => !val);
+    }
+    const ToggleDashboard = () => {
+        /*
+        Purpose to retained filter if not redirected
+         - created isRedirected boolean state as identifier.
+         - modified toggle dashboard function for UX design.
+        */
+
+        if(isRedirected){
+            setShiftFilter('all');
+        }
+        setShowDashboard(val => !val);
+        setRedirected(false);
+    }
     /** OLD FILTER Commented By: JOSH**/
     const filteredEmployees = useMemo(() => {
         if (!data) return [];
@@ -129,7 +151,7 @@ const Attendance:FC<Props> = ({dt}) => {
                             </div>
                         )
                     }
-                    {!isLoading&&<AttendanceHeader resetProjectFilter={()=>setProjectFilterIds([])} onProjectFilter={onProjectFilter} projectFilterIds={projectFilterIds} showDashboard={showDashboard} showDashboardToggle={()=>setShowDashboard(val=>!val)} onInputChange={onInputChange} onShiftChange={e=>setShiftFilter(e)} strFilter={strFilter} shift={shiftFilter} employees={data} setHead={updateParentHead} head={head} />}
+                    {!isLoading&&<AttendanceHeader resetProjectFilter={()=>setProjectFilterIds([])} onProjectFilter={onProjectFilter} projectFilterIds={projectFilterIds} showDashboard={showDashboard} showDashboardToggle={ToggleDashboard} onInputChange={onInputChange} onShiftChange={e=>setShiftFilter(e)} strFilter={strFilter} shift={shiftFilter} employees={data} setHead={updateParentHead} head={head} />}
                     {
                         !isLoading  && filteredEmployees && !showDashboard && (
                             <div className='flex-1 overflow-y-hidden'>
@@ -139,7 +161,7 @@ const Attendance:FC<Props> = ({dt}) => {
                     }
                     {!isLoading  && data && showDashboard &&(
                         <div className='flex-1 overflow-y-hidden'>
-                            <AttendanceDashboard loading={isLoading} dt={dt} users={filteredEmployees||[]} />
+                            <AttendanceDashboard loading={isLoading} dt={dt} users={filteredEmployees||[]} redirectShift={(id:string) => {RedirectShift(id)}} />
                         </div>                    
                     )}
                 </div>

@@ -258,7 +258,7 @@ class IndividualPerformanceController extends Controller
         ]);
     }
     /*END OF ACCESS HANDLERS---------------------------------------------------------------*/
-    public function team(Request $request, $team_id = null)
+    public function team(Request $request, $team_id = null, $project_id = null)
     {
         $user = Auth::user();
         $has_any_team = Team::count() > 0;
@@ -283,16 +283,14 @@ class IndividualPerformanceController extends Controller
         $from = isset($request->date['from']) ? Carbon::parse($request->date['from'])->format('Y-m-d') : null;
         $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
         if (!$from) {
-            //set $from to first day of previous month, set $to to last day of previous month
-            /**UPDATE - Instead of setting default by previous month set it into current month. commented By JOSH*/
-            // $from = Carbon::now()->subMonth()->startOfMonth()->addHours(12)->format('Y-m-d');
-            // $to = Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d');
             $from = Carbon::now()->startOfMonth()->format('Y-m-d');
             $to = Carbon::now()->endOfMonth()->format('Y-m-d');
         }
-        $users = User::where('team_id', $team->id)->get();
-
-
+        $tl_user = User::where('id', $team->user_id)->first();
+        $projects = collect(self::LeadedProjectswithHistories($tl_user));
+        $project_id = $project_id != null ? $project_id : $projects[0]['id'];
+        $users = User::where('team_id', $team->id)
+            ->where('users.project_id', $project_id)->get();
         $user_breakdown_raw = IndividualPerformanceUserMetric::select(
             'individual_performance_user_metrics.individual_performance_metric_id',
             'individual_performance_metrics.metric_name as Metric',
@@ -330,7 +328,6 @@ class IndividualPerformanceController extends Controller
             )
             ->get()
             ->toArray();
-        // return response()->json($user_breakdown_raw);
         $user_breakdown = [];
         foreach ($user_breakdown_raw as $user) {
             //check if user is already in the array
@@ -464,6 +461,7 @@ class IndividualPerformanceController extends Controller
                 DB::raw('AVG(a.value) as average')
             )
             ->where('c.team_id', $team->id)
+            ->where('c.project_id', $project_id)
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
             ->where('a.value', '>', 0)
             ->whereBetween('a.date', [$from, $to])
@@ -529,6 +527,8 @@ class IndividualPerformanceController extends Controller
                 'from' => $from,
                 'to' => $to
             ],
+            'team_projects' => $projects,
+            'project' => Project::find($project_id) ??  ["id" => 0, "name" => "No Project Found", "metrics" => []],
             'team' => $team,
             'teams' => $this->is_admin() ? Team::orderBy('name')->get() : ($this->is_team_lead() ? $teams : [$team]),
             'agents' => $users,
@@ -1072,19 +1072,19 @@ class IndividualPerformanceController extends Controller
     }
 
     /**TEAM LEADER'S FUNCTIONS*/
-    private function LeadedTeams()
+    private function LeadedTeams($param_user = null)
     {
-        $user = Auth::user();
+        $user = $param_user != null ? $param_user : Auth::user();
         $team_ids = Team::where('user_id', $user->id)->pluck('id');
         return $team_ids;
     }
-    private function LeadedProjects()
+    private function LeadedProjects($param_user = null)
     {
-        $user = Auth::user();
+        $user = $param_user != null ? $param_user : Auth::user();
         $projects = [];
         $projects = Project::join('users', 'projects.id', '=', 'users.project_id')
-            ->when($this->is_team_lead() && !$this->is_admin(), function ($query) {
-                $query->whereIn('users.team_id', self::LeadedTeams());
+            ->when($this->is_team_lead() && !$this->is_admin(), function ($query) use ($param_user) {
+                $query->whereIn('users.team_id', self::LeadedTeams($param_user));
             })
             ->when((($user->project_id ?? 0) > 0), function ($query) use ($user) {
                 $query->orWhere('projects.id', $user->project_id);
@@ -1096,13 +1096,14 @@ class IndividualPerformanceController extends Controller
 
         return $projects;
     }
-    private function LeadedProjectswithHistories()
+    private function LeadedProjectswithHistories($param_user = null)
     {
+        $user = $param_user != null ? $param_user : Auth::user();
         $projects = [];
         $projects =  ProjectHistory::join('projects', 'project_histories.project_id', '=', 'projects.id')
             ->join('users', 'projects.id', '=', 'users.project_id')
-            ->orWhereIn('users.team_id', self::LeadedTeams())
-            ->orWhere('project_histories.user_id', Auth::user()->id)
+            ->orWhereIn('users.team_id', self::LeadedTeams($param_user))
+            ->orWhere('project_histories.user_id', $user->id)
             ->select('projects.*')->groupBy('projects.id')
             ->orderBy('projects.name')
             ->get();

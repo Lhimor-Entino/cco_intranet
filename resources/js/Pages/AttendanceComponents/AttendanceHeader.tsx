@@ -8,12 +8,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { useAttendanceReportModal } from "@/Hooks/useAttendanceReportModal";
 import { cn } from "@/lib/utils";
-import { PageProps, User } from "@/types";
+import { PageProps, Shift, User } from "@/types";
 import { Inertia, Page } from "@inertiajs/inertia";
 import { usePage } from "@inertiajs/inertia-react";
 import { Separator } from "@radix-ui/react-select";
 import { addDays, addYears, format } from "date-fns";
-import {  CalendarClockIcon, CalendarIcon, Check, ChevronsUpDownIcon, FileSpreadsheet, GanttChart, RefreshCw, SearchIcon, SlidersHorizontal, UserIcon, XIcon } from "lucide-react";
+import {  CalendarClockIcon, CalendarIcon, Check, ChevronsUpDownIcon, FileSpreadsheet, Filter, GanttChart, Globe, RefreshCw, SearchIcon, SlidersHorizontal, UserIcon, XIcon } from "lucide-react";
 import { ChangeEvent, FC, ReactNode, useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { toast } from "sonner";
@@ -38,98 +38,22 @@ const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter
     const [showDateModal,setShowDateModal] = useState(false);
     const {user} = usePage<Page<PageProps>>().props.auth;
     const {onOpen} = useAttendanceReportModal();
-    const [filter,setFilter] = useState<string>('');
-    const [open, setOpen] = useState(false)
-    const filteredEmployees = (employees || []).filter(employee=>{
-        if(filter === '') return true;
-        return employee.first_name.toLowerCase().includes(filter.toLowerCase()) || employee.last_name.toLowerCase().includes(filter.toLowerCase());
-    });
-    const selectedHead = (employees || []).filter(employee => employee.id === head)[0];
     return (
         <>
             <div className="flex items-center justify-between gap-x-2 h-auto">
                 <div className="flex items-center gap-x-2">
                     {!showDashboard?(
                         <>
-                            <div className="relative">
-                                <SearchIcon className="absolute top-1/2 left-2 transform -translate-y-1/2 text-primary" />
-                                <Input value={strFilter} onChange={onInputChange} placeholder="Filter by Company ID/Last Name" className="pl-8 md:w-72 h-9" />
-                            </div>
-                            <Select onValueChange={e=>onShiftChange(e)} value={shift}>
-                                <SelectTrigger className="h-9 w-40">
-                                    <SelectValue  placeholder="Select a Shift" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectLabel>Shift Schedule</SelectLabel>
-                                        <SelectItem value="0">No Schedule</SelectItem>
-                                        <SelectItem value={"all"}>Show All</SelectItem>
-                                        {
-                                            shifts.map((shift) =><SelectItem key={shift.id} value={shift.id.toString()}>{shift.schedule}</SelectItem>)
-                                        }
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                            <Popover open={open} onOpenChange={setOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={open}
-                                    className="w-50 justify-between"
-                                    disabled={false}
-                                    >
-                                    {head
-                                        ? `${selectedHead.first_name} ${selectedHead.last_name}`
-                                        : "Filter Supervisor/Head..."}
-                                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 "  >
-                                    <div className="sticky top-0 z-10 w-full">
-                                        <Input  value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search Supervisor/Head..." />
-                                    </div>
-                                    <Separator />
-                                    <div className="max-h-[23rem] overflow-auto">
-                                        <Command >
-                                            <CommandGroup>
-                                                {head > 0 && (<Button 
-                                                    onClick={() => setHead(0)}
-                                                    className='w-full fkex items-center justify-start'
-                                                    variant='ghost'
-                                                    size='sm'> 
-                                                    <XIcon className="h-4 w-4 mr-2" />
-                                                    Clear Filter
-
-                                                </Button>)}
-
-                                                {(filteredEmployees || []).map((employee) => (
-                                                    <Button
-                                                        key={employee.id}
-                                                        onClick={() => {
-                                                            setHead(employee.id);
-                                                            setOpen(false);
-                                                        }}
-                                                        className='w-full fkex items-center justify-start'
-                                                        variant='ghost'
-                                                        size='sm'
-                                                    >
-                                                
-                                                        <Check
-                                                        className={cn(
-                                                            "mr-2 h-4 w-4",
-                                                            (head === employee.id) ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                        />
-                                                        {`${employee.first_name} ${employee.last_name}`}
-                                                    
-                                                    </Button>
-                                                ))}
-                                            </CommandGroup>
-                                        </Command>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
+                            <FilterModal 
+                              search = {strFilter}
+                              searchEvent = {onInputChange} 
+                              shift ={shift}
+                              shifts={shifts}
+                              shiftEvent = {onShiftChange}
+                              employees = {employees}
+                              head = {head}
+                              setHead = {setHead}
+                            />
                         </>
                     ):(
                         <div className="text-lg font-semibold tracking-wide">
@@ -160,7 +84,7 @@ const AttendanceHeader:FC<Props> = ({shift,onShiftChange,onInputChange,strFilter
                     </Button>
                     
                 </div>
-                <DropdownMenu>
+                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button size='sm' variant='outline'>
                             <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -256,4 +180,125 @@ const DateModal:FC<DateModalProps> = ({isOpen,onClose}) =>{
             </DialogContent>
         </Dialog>
     );
+}
+
+interface Filter{
+    search: string;
+    searchEvent: (e:ChangeEvent<HTMLInputElement>)=>void;
+    shift?:string
+    shiftEvent: (shift_id:string)=>void;
+    shifts: Shift[];
+    employees: User[] | undefined;
+    head:number;
+    setHead: (new_head: number) => void
+  
+}
+const FilterModal:FC<Filter>  = ({head,setHead,search, searchEvent, shiftEvent, shift, shifts,employees}) => {
+    const [open, setOpen] = useState(false)
+    const [filter,setFilter] = useState<string>('');
+    const filteredEmployees = (employees || []).filter(employee=>{
+        if(filter === '') return true;
+        return employee.first_name.toLowerCase().includes(filter.toLowerCase()) || employee.last_name.toLowerCase().includes(filter.toLowerCase());
+    });
+    const selectedHead = (employees || []).filter(employee => employee.id === head)[0];
+   
+    return (
+        <Dialog>
+            <DialogTrigger>
+                <Filter/>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle className='flex items-center w-full'>
+                    <Filter className="mr-2"/>
+                    Filter Options
+                </DialogTitle>
+                <DialogDescription>
+                  Use the filters to narrow down the records by Agent, Assigned Shift, Supervisor and  Project.
+                </DialogDescription>
+                </DialogHeader>
+                <div className='flex items-center w-full'>
+                    <div className="w-full relative">                                
+                        <Input value={search} onChange={searchEvent} placeholder=" Filter by Company ID/Last Name"  className=" w-full" />
+                    </div>
+                    <SearchIcon className="absolute right-3 mr-5 " />
+                </div>
+                <Select onValueChange={e=>shiftEvent(e)} value={shift}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue  placeholder="Select a Shift" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Shift Schedule</SelectLabel>
+                            <SelectItem value="0">No Schedule</SelectItem>
+                            <SelectItem value={"all"}>Show All</SelectItem>
+                            {
+                                shifts.map((shift) =><SelectItem key={shift.id} value={shift.id.toString()}>{shift.schedule}</SelectItem>)
+                            }
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <Popover open={open} onOpenChange={setOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={open}
+                                    className="w-50 justify-between"
+                                    disabled={false}
+                                    >
+                                    {head
+                                        ? `${selectedHead.first_name} ${selectedHead.last_name}`
+                                        : "Filter Supervisor/Head..."}
+                                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent  side="bottom" align="center" sideOffset={10} >
+                                    <div className="sticky top-0 z-10 w-full">
+                                        <Input  value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Search Supervisor/Head..." />
+                                    </div>
+                                    <Separator />
+                                    <div className="max-h-[15rem] overflow-auto">
+                                        <Command >
+                                            <CommandGroup>
+                                                {head > 0 && (<Button 
+                                                    onClick={() => setHead(0)}
+                                                    className='w-full fkex items-center justify-start'
+                                                    variant='ghost'
+                                                    size='sm'> 
+                                                    <XIcon className="h-4 w-4 mr-2" />
+                                                    Clear Filter
+
+                                                </Button>)}
+
+                                                {(filteredEmployees || []).map((employee) => (
+                                                    <Button
+                                                        key={employee.id}
+                                                        onClick={() => {
+                                                            setHead(employee.id);
+                                                            setOpen(false);
+                                                        }}
+                                                        className='w-full fkex items-center justify-start'
+                                                        variant='ghost'
+                                                        size='sm'
+                                                    >
+                                                
+                                                        <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            (head === employee.id) ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                        />
+                                                        {`${employee.first_name} ${employee.last_name}`}
+                                                    
+                                                    </Button>
+                                                ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+            </DialogContent>
+        </Dialog>
+    )
 }

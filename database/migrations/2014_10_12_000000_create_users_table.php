@@ -20,14 +20,14 @@ class CreateUsersTable extends Migration
             $table->string('middle_name')->nullable();
             $table->string('photo')->nullable();
             $table->string('company_id')->index()->unique();
-            $table->string('email')->unique()->nullable();            
+            $table->string('email')->unique()->nullable();
             $table->date('date_of_birth');
-            $table->string('position')->nullable();            
+            $table->string('position')->nullable();
             $table->string('department')->nullable();
             $table->string('project')->nullable();
             $table->string('site')->nullable();
             $table->date('date_hired')->nullable();
-            $table->date('date_resigned')->nullable();            
+            $table->date('date_resigned')->nullable();
             $table->string('schedule')->nullable();
             $table->tinyInteger('level')->default(3);
             $table->timestamp('email_verified_at')->nullable();

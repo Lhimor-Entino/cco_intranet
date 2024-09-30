@@ -34,6 +34,9 @@ export interface User {
     team?:Team;
     team_join_date?:string;
     user_metrics:IndividualPerformanceUserMetric[];
+    // Date of Record
+    created_at?:Date;
+    updated_at?:Date;
 }
 
 export interface TimeStamp{
@@ -112,6 +115,7 @@ export interface UserAttendance {
     is_tardy:string;
     shift_id?:string;
     shift?:Shift;
+    status_code?:number;
     edited_time_in:1|0;
     edited_time_out:1|0;
     edited_time_in_by_id?:number;
