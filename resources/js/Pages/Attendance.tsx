@@ -16,6 +16,12 @@ import AttendanceDashboard from './AttendanceComponents/AttendanceDashboard';
 import { useLocalStorage } from 'usehooks-ts';
 import { useAttendanceDate } from './AttendanceComponents/AttendanceHooks.ts/useAttendanceDate';
 import { truncateByDomain } from 'recharts/types/util/ChartUtils';
+import { Separator } from '@/Components/ui/separator';
+import { StringLiteralType } from 'typescript';
+import { createBlockSpecFromStronglyTypedTiptapNode } from '@blocknote/core';
+import { timeZonesWithOffsets } from '@/lib/utils';
+import { toast } from 'sonner';
+
 
 
 const getAttendances = async (search:string) => axios.post(route('api.attendances'),{search}).then((res:{data:User[]}) => res.data);
@@ -25,37 +31,54 @@ interface Props {
 }
 
 const Attendance:FC<Props> = ({dt}) => {
+
     const { isLoading, isError, data, error } = useQuery(['attendances',dt], ()=>getAttendances(dt),{refetchInterval: 120000});
     const [strFilter, setStrFilter] = useState<string>('');
     const [shiftFilter, setShiftFilter] = useState<string|undefined>();
+    const [siteFilter, setSiteFilter] = useState<string|undefined>();
+    const [attendanceStatus, setAttendanceStatus] = useState<string|undefined|null>();
     const [showDashboard,setShowDashboard] = useLocalStorage('showDashboard',true);
     const onInputChange = (e:ChangeEvent<HTMLInputElement>) => setStrFilter(e.target.value);
     const [projectFilterIds,setProjectFilterIds] = useState<string[]>([]);
     const {setAttendanceDate} = useAttendanceDate();
     const [head,setHead] = useState(0);
     const [isRedirected, setRedirected] = useState(false);
+    const timezones:any = timeZonesWithOffsets();
+    const [timezoneVal, setTimezone] = useState<number>(() => {
+        const storedTimezone = localStorage.getItem('myTimezone');
+        return storedTimezone ? parseInt(storedTimezone, 10) : 1;
+    });
     const updateParentHead = (head:number) => setHead(head);
-    const RedirectShift = (id:string) => {
+    const RedirectShift = (id:string, status?:string|null|undefined) => {
         if(isRedirected){
             setShiftFilter('all');
         }
+        setAttendanceStatus(status);
         setShiftFilter(id);
         setShowDashboard(val => !val);
         setRedirected(val => !val);
     }
+    
     const ToggleDashboard = () => {
         /*
         Purpose to retained filter if not redirected
          - created isRedirected boolean state as identifier.
          - modified toggle dashboard function for UX design.
+         Commented By: JOSH
         */
-
         if(isRedirected){
             setShiftFilter('all');
         }
         setShowDashboard(val => !val);
         setRedirected(false);
     }
+    const assignTimezone = (index:number) => {
+        setTimezone(index);
+        localStorage.setItem('myTimezone', timezoneVal.toString());
+        toast.success('Timezone was change to ' + timezones[index].name);
+    }
+    // Changing Timezone
+    
     /** OLD FILTER Commented By: JOSH**/
     const filteredEmployees = useMemo(() => {
         if (!data) return [];
@@ -88,10 +111,27 @@ const Attendance:FC<Props> = ({dt}) => {
                 return projectFilterIds.includes(project_id.toString());
             });
         }
+        if(siteFilter !== 'all'){
+            result = result.filter(employee => {
+                if (!siteFilter) return true;
+                return employee.site && employee.site.toUpperCase() === siteFilter;
+            });
+        }
+        if(attendanceStatus !== null && attendanceStatus !== undefined){
+           if(attendanceStatus === 'present'){
+                result = result.filter(employee => {
+                    return employee.attendances[0].time_in !== null
+                })
+           }
+           if(attendanceStatus === 'absent'){
+            result = result.filter(employee => {
+                return employee.attendances[0].time_in === null
+            })
+       }
+        }
     
         return result;
-    }, [data, head, strFilter, shiftFilter, projectFilterIds]);
-    
+    }, [data, head, strFilter, shiftFilter, projectFilterIds, siteFilter]);
     /** OLD FILTER**/
     // const filteredEmployees = useMemo(()=>data?.filter((employee) => {
     //     if(head > 0) return employee.user_id === head;
@@ -115,11 +155,14 @@ const Attendance:FC<Props> = ({dt}) => {
         setProjectFilterIds(val=>([...val,project_id]))
     };
 
-    const timeZone = 'Asia/Manila';
+    const index = parseInt(localStorage.getItem('myTimezone')?? "1",10);
+    const timeZone = 'Asia/Manila'; // timeZonesWithOffsets()[index].name;
     const zonedDate = formatInTimeZone(new Date(dt), timeZone, 'PP')
     useEffect(() => setShowDashboard(true),[]);
     useEffect(()=>setAttendanceDate(dt),[dt]);
-
+    useEffect(() => {
+        localStorage.setItem('myTimezone', timezoneVal.toString());
+    },[timezoneVal]);
     // const date = new Date();
     // const options = { timeZone: "Asia/Manila", hour12: false };
     // const dateInManilaStr = date.toLocaleString("en-US", options);
@@ -138,9 +181,16 @@ const Attendance:FC<Props> = ({dt}) => {
                             <div className='flex-1 flex flex-col gap-y-3.5'>
                                 <div className='flex items-center gap-x-2'>
                                     <Skeleton className='h-9 rounded-lg w-96' />
-                                    <Skeleton className='h-9 rounded-lg w-32 ml-auto' />
+                                    <Skeleton className='h-9 rounded-lg w-64 ml-auto' />
                                 </div>
                                 <div className='flex-1 py-3.5'>
+                                    <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <Skeleton className='h-12 w-64 rounded-lg ' />
+                                        <Skeleton className='h-12 w-64 rounded-lg  ' />
+                                        <Skeleton className='h-12 w-64 rounded-lg ' />
+                                        <Skeleton className='h-12 w-64 rounded-lg  ' />
+                                    </div>
+                                    <br /><br />
                                     <Skeleton className='h-12 rounded-lg w-full mb-3.5' />
                                     <Skeleton className='h-12 rounded-lg w-full mb-1' />
                                     <Skeleton className='h-12 rounded-lg w-full mb-1' />
@@ -151,7 +201,23 @@ const Attendance:FC<Props> = ({dt}) => {
                             </div>
                         )
                     }
-                    {!isLoading&&<AttendanceHeader resetProjectFilter={()=>setProjectFilterIds([])} onProjectFilter={onProjectFilter} projectFilterIds={projectFilterIds} showDashboard={showDashboard} showDashboardToggle={ToggleDashboard} onInputChange={onInputChange} onShiftChange={e=>setShiftFilter(e)} strFilter={strFilter} shift={shiftFilter} employees={data} setHead={updateParentHead} head={head} />}
+                    {!isLoading&&<AttendanceHeader 
+                    resetProjectFilter={()=>setProjectFilterIds([])} 
+                    onProjectFilter={onProjectFilter} 
+                    projectFilterIds={projectFilterIds} 
+                    showDashboard={showDashboard} 
+                    showDashboardToggle={ToggleDashboard} 
+                    onInputChange={onInputChange} 
+                    onShiftChange={e=>setShiftFilter(e)} 
+                    onSiteChange={e=>setSiteFilter(e)} 
+                    onTimezoneChange={(index:number) => assignTimezone(index)}
+                    strFilter={strFilter} 
+                    shift={shiftFilter} 
+                    site={siteFilter} 
+                    employees={data} 
+                    setHead={updateParentHead} 
+                    head={head} 
+                    timezone={timezoneVal}/>}
                     {
                         !isLoading  && filteredEmployees && !showDashboard && (
                             <div className='flex-1 overflow-y-hidden'>
@@ -161,7 +227,7 @@ const Attendance:FC<Props> = ({dt}) => {
                     }
                     {!isLoading  && data && showDashboard &&(
                         <div className='flex-1 overflow-y-hidden'>
-                            <AttendanceDashboard loading={isLoading} dt={dt} users={filteredEmployees||[]} redirectShift={(id:string) => {RedirectShift(id)}} />
+                            <AttendanceDashboard timezone={timezoneVal}loading={isLoading} dt={dt} users={filteredEmployees||[]} redirectShift={(id:string, status:string|null|undefined) => {RedirectShift(id,status)}} />
                         </div>                    
                     )}
                 </div>

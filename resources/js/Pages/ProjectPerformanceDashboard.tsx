@@ -13,7 +13,7 @@ import { Popover, PopoverContent } from '@/Components/ui/popover';
 import { PopoverTrigger } from '@radix-ui/react-popover';
 import { Button } from '@/Components/ui/button';
 import { cn, convertToTimezone, parseDateRange } from '@/lib/utils';
-import {  BarChartBig, BetweenHorizontalStart, CalendarIcon, SquareArrowRightIcon } from 'lucide-react';
+import {  BarChartBig, BetweenHorizontalStart, CalendarIcon, Filter, SquareArrowRightIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/Components/ui/accordion';
@@ -22,6 +22,9 @@ import TrendsPanel from './IndividualPerformance/Dashboard/TrendsPanel';
 import TopPerformers from './IndividualPerformance/Dashboard/TopPerformers';
 import AverageBarChart from './IndividualPerformance/Dashboard/AverageBarChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/Components/ui/dialog';
+import { Separator } from '@/Components/ui/separator';
+import { Label } from '@/Components/ui/label';
 
 interface Props {
     is_team_leader:boolean;
@@ -46,10 +49,7 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
     },[]);
     const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.project',{project_id:t.id}));
     const ownProject = user.team_id===project.id;
-    const navigate = (project:Project) => {
-        const new_date = parseDateRange(date);
-        Inertia.get(route('individual_performance_dashboard.project',{project_id:project.id,date:new_date}));
-    }
+   
     const formattedTrends:Trend[] = useMemo(()=>{
         return project_trends.map(trend=>({
             metricName:trend.metric_name,
@@ -73,50 +73,17 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
                     </div>
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
                         <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
-                            <ProjectSelectionComboBox projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} isAdmin={is_admin || is_team_leader} onSelectProject={navigate} />
-                            <div className='flex items-center'>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            size='sm'
-                                            id="date"
-                                            variant={"outline"}
-                                            className={cn(
-                                            "w-60 justify-start text-left font-normal rounded-r-none",
-                                            !date && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {date?.from ? (
-                                                date.to ? (
-                                                    <>
-                                                    {format(date.from, "LLL dd, y")} -{" "}
-                                                    {format(date.to, "LLL dd, y")}
-                                                    </>
-                                                ) : (
-                                                    format(date.from, "LLL dd, y")
-                                                )
-                                                ) : (
-                                                <span className='text-xs'>Select date range or Pick a Date</span>
-                                            )}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={date?.from}
-                                        selected={date}
-                                        onSelect={setDate}
-                                        numberOfMonths={1}
-                                    />
-                                    </PopoverContent>
-                                </Popover>
-                                <Button size='sm' onClick={() => {navigate(project);}} variant='secondary' className='rounded-l-none'>
-                                    Go
-                                    <SquareArrowRightIcon className='h-5 w-5 ml-2' />
-                                </Button>
-                            </div>
+                           <ModalFilter
+                            date={date}
+                            date_range={date_range}
+                            setDate={setDate}
+                            is_admin={is_admin}
+                            is_team_leader={is_team_leader}
+                            project={project}
+                            project_histories={project_histories}
+                            projects={projects}
+                           />
+                            
                         </div>
                         <div className='flex-1 flex flex-col overflow-y-auto gap-y-3.5'>
                             <div className='overflow-auto'>
@@ -201,3 +168,93 @@ const ProjectPerformanceDashboard:FC<Props> = ({is_team_leader,is_admin,date_ran
 };
 
 export default ProjectPerformanceDashboard;
+
+interface Filter {
+    is_team_leader:boolean;
+    is_admin:boolean;
+    date_range?:DateRange;
+    projects:Project[];
+    project_histories: Project[];
+    project:Project;
+    date:DateRange | undefined;
+    setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
+}
+export const ModalFilter:FC<Filter> = ({is_team_leader,is_admin,date,setDate,projects,project,project_histories}) => {
+    const navigate = (project:Project) => {
+        const new_date = parseDateRange(date);
+        Inertia.get(route('individual_performance_dashboard.project',{project_id:project.id,date:new_date}));
+    }
+    return (
+        <Dialog>
+          <DialogTrigger asChild>
+                <Button variant={"outline"} size={"sm"} className='min-w-[7.5rem]' >
+                    <Filter className="h-4 w-4 mr-2"/>
+                    Filter
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+            <DialogHeader>
+                <DialogTitle className='flex items-center w-full'>
+                    <Filter className="mr-2"/>
+                    Filter Options
+                </DialogTitle>
+                <DialogDescription>
+                    Use the filters to narrow down the records by <b>Agent</b>, <b>Date</b> and <b>Assigned Project</b>.
+                </DialogDescription>
+            </DialogHeader>
+            <Separator className='border'/>
+            <div className="grid w-full items-center gap-1.5">
+                <Label>Project</Label>
+                <ProjectSelectionComboBox className="!w-full" projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} isAdmin={is_admin || is_team_leader} onSelectProject={navigate} />
+            </div>
+            <div className="grid w-full items-center gap-1.5">
+                <Label>Date Range</Label>
+                <div className='flex items-center'>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            size='sm'
+                                            id="date"
+                                            variant={"outline"}
+                                            className={cn(
+                                            "!w-full justify-start text-left font-normal rounded-r-none",
+                                            !date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {date?.from ? (
+                                                date.to ? (
+                                                    <>
+                                                    {format(date.from, "LLL dd, y")} -{" "}
+                                                    {format(date.to, "LLL dd, y")}
+                                                    </>
+                                                ) : (
+                                                    format(date.from, "LLL dd, y")
+                                                )
+                                                ) : (
+                                                <span className='text-xs'>Select date range or Pick a Date</span>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        initialFocus
+                                        mode="range"
+                                        defaultMonth={date?.from}
+                                        selected={date}
+                                        onSelect={setDate}
+                                        numberOfMonths={1}
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <Button size='sm' onClick={() => {navigate(project);}} variant='secondary' className='rounded-l-none'>
+                                    Go
+                                    <SquareArrowRightIcon className='h-5 w-5 ml-2' />
+                                </Button>
+                            </div>
+            </div>
+            
+            </DialogContent>
+        </Dialog>
+    )
+}

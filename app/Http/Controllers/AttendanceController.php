@@ -17,9 +17,13 @@ class AttendanceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($search = "")
+    public function index($search = "", $tz = "Asia/Manila")
     {
-        $dt = $search != "" ? Carbon::parse($search)->format('Y-m-d') : Carbon::now()->format('Y-m-d');
+        // return Carbon::parse('2024-10-02 05:44:00')->setTimezone($tz)->format('Y-m-d H:i');
+        // $ddt= Carbon::createFromFormat('Y-m-d H:i:s', $some_date, 'America/Los_Angeles')->setTimezone('UTC')
+
+        $dt = $search != "" ? Carbon::parse($search)->format('Y-m-d') : Carbon::now()->setTimezone($tz)->format('Y-m-d');
+
         return Inertia::render('Attendance', [
             'dt' => $dt,
         ]);

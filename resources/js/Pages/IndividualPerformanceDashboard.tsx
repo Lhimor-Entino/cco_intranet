@@ -10,7 +10,7 @@ import UserSelectionComboBox from './IndividualPerformance/UserSelectionComboBox
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import { Button } from '@/Components/ui/button';
 import { cn, convertToTimezone, parseDateRange, roundWithFormat } from '@/lib/utils';
-import {  BarChartBig, BetweenHorizontalStart, CalendarIcon,  Edit,  ExpandIcon,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
+import {  BarChartBig, BetweenHorizontalStart, CalendarIcon,  Edit,  ExpandIcon,  Filter,  PencilIcon,  ShrinkIcon,  SquareArrowRightIcon } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { Calendar } from '@/Components/ui/calendar';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
@@ -25,6 +25,8 @@ import RateAgentsModal, { RateAgentsForm } from './IndividualPerformance/Dashboa
 import TrendsPanel from './IndividualPerformance/Dashboard/TrendsPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { round } from 'lodash';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/Components/ui/dialog';
+import { Label } from '@/Components/ui/label';
 
 
 type UserMetricGroup = {date:string,metrics:IndividualPerformanceUserMetric[]}
@@ -66,23 +68,13 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
     const [selectedUser,setSelectedUser] = useState<User|undefined>(agent);
     const [initialDate, setDate] = useState<DateRange | undefined>(date_range);
     useMemo(() => {
+       
         const date = parseDateRange(initialDate);
         const param = {from: convertToTimezone(new Date(date.from + '')), to: convertToTimezone(new Date(date.to + ''))}
         setDate(param);
     },[]);
-    const navigate = () => {
-        if(!project) return toast.error('Please select a project');
-        if(!selectedUser) return toast.error('Please select an agent');
-        if(!initialDate) return toast.error('Please select a date range or pick a date');
-        const date = parseDateRange(initialDate);
-        Inertia.get(route('individual_performance_dashboard.index',{
-            project_id:project.id,
-            date,
-            company_id:selectedUser.company_id
-        }));
-    };
     
-    const onProjectSelect = (project:Project) => Inertia.get(route('individual_performance_dashboard.index',{project_id:project.id}));
+    
     
     const agentName = selectedUser?selectedUser.first_name+' '+selectedUser.last_name:'';
     
@@ -174,55 +166,27 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
                     <div className='md:relative flex flex-row md:flex-col items-center'>
                         <Header logo='performance' title="Individual Performance Dashboard" />                        
                         <IPDDropdown project_id={project.id} isTeamLead={is_team_leader} isAdmin={is_admin} className='md:absolute md:right-0 md:top-[0.7rem] !ring-offset-background focus-visible:!outline-none'  />
+                        <div className='mr-auto  h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
+                            <ModalFilter
+                                is_admin = {is_admin}
+                                is_team_leader = {is_team_leader}
+                                project={project}
+                                projects={projects}
+                                project_histories={project_histories}
+                                agents={agents}
+                                date_range={date_range}
+                                agent={agent}
+                                selectedUser={selectedUser}
+                                setSelectedUser={setSelectedUser}
+                                initialDate={initialDate}
+                                setDate={setDate}
+
+                            />
+                            
+                        </div>
                     </div>                
                     <div className="flex-1 flex flex-col gap-y-3.5 overflow-y-auto">
-                        <div className='h-auto flex flex-col gap-y-1 md:gap-y-0 md:flex-row md:items-center md:justify-between'>
-                            <ProjectSelectionComboBox isAdmin={is_admin || is_team_leader} projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} onSelectProject={onProjectSelect} />
-                            <div className='flex items-center gap-x-1.5'>
-                                <UserSelectionComboBox isTeamLead={is_team_leader||is_admin} users={agents} selectedUser={selectedUser} onSelectUser={setSelectedUser} />
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            size='sm'
-                                            id="date"
-                                            variant={"outline"}
-                                            className={cn(
-                                            "w-60 justify-start text-left font-normal",
-                                            !initialDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {initialDate?.from ? (
-                                                initialDate.to ? (
-                                                    <>
-                                                    {format(initialDate.from, "LLL dd, y")} -{" "}
-                                                    {format(initialDate.to, "LLL dd, y")}
-                                                    </>
-                                                ) : (
-                                                    format(initialDate.from, "LLL dd, y")
-                                                )
-                                                ) : (
-                                                <span className='text-xs'>Select date range or Pick a Date</span>
-                                            )}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        initialFocus
-                                        mode="range"
-                                        defaultMonth={initialDate?.from}
-                                        selected={initialDate}
-                                        onSelect={setDate}
-                                        numberOfMonths={1}
-                                    />
-                                    </PopoverContent>
-                                </Popover>
-                                <Button size='sm' onClick={navigate} variant='secondary'>
-                                    Go
-                                    <SquareArrowRightIcon className='h-5 w-5 ml-2' />
-                                </Button>
-                            </div>
-                        </div>
+                        
                         {(!!date_range?.to && !!date_range?.from && !!agent_averages) && (
                             <div className='h-auto flex flex-col gap-y-2.5'>
                                 <Accordion defaultValue='averages' type='single' collapsible className="w-full">                                    
@@ -358,4 +322,107 @@ const IndividualPerformanceDashboard:FC<Props> = ({is_admin,is_team_leader,proje
 
 export default IndividualPerformanceDashboard;
 
-
+interface Filter {
+    is_admin:boolean;
+    is_team_leader:boolean;
+    project:Project;
+    projects:Project[];
+    project_histories: Project[];
+    agents:User[];
+    date_range?:DateRange;
+    agent?:User;
+    selectedUser: User | undefined;
+    setSelectedUser: React.Dispatch<React.SetStateAction<User | undefined>>;
+    initialDate: DateRange | undefined;
+    setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
+}
+export const ModalFilter:FC<Filter> = ({initialDate,setDate,selectedUser, setSelectedUser, is_admin,is_team_leader,project,projects,project_histories,agents,date_range,agent}) => {
+    const onProjectSelect = (project:Project) => Inertia.get(route('individual_performance_dashboard.index',{project_id:project.id}));
+    const navigate = () => {
+        if(!project) return toast.error('Please select a project');
+        if(!selectedUser) return toast.error('Please select an agent');
+        if(!initialDate) return toast.error('Please select a date range or pick a date');
+        const date = parseDateRange(initialDate);
+        Inertia.get(route('individual_performance_dashboard.index',{
+            project_id:project.id,
+            date,
+            company_id:selectedUser.company_id
+        }));
+    };
+    return (
+        <Dialog>
+          <DialogTrigger asChild>
+                <Button variant={"outline"} size={"sm"} className='min-w-[7.5rem]' >
+                    <Filter className="h-4 w-4 mr-2"/>
+                    Filter
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+            <DialogHeader>
+                <DialogTitle className='flex items-center w-full'>
+                    <Filter className="mr-2"/>
+                    Filter Options
+                </DialogTitle>
+                <DialogDescription>
+                    Use the filters to narrow down the records by <b>Agent</b>, <b>Date</b> and <b>Assigned Project</b>.
+                </DialogDescription>
+            </DialogHeader>
+            <Separator className='border'/>
+            <div className="grid w-full items-center gap-1.5">
+                <Label>Project</Label>
+                <ProjectSelectionComboBox className='!w-full w-1/2' isAdmin={is_admin || is_team_leader} projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} onSelectProject={onProjectSelect} />
+            </div>
+            <div className="grid w-full items-center gap-1.5">
+                <Label>Agent</Label>
+                <UserSelectionComboBox  isTeamLead={is_team_leader||is_admin} users={agents} selectedUser={selectedUser} onSelectUser={setSelectedUser} />                
+            </div>
+            <div className="grid w-full  items-center gap-1.5">
+                <Label>Date Range</Label>
+                <div className='flex items-center w-full gap-x-1.5'>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                size='sm'
+                                id="date"
+                                variant={"outline"}
+                                className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !initialDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {initialDate?.from ? (
+                                    initialDate.to ? (
+                                        <>
+                                        {format(initialDate.from, "LLL dd, y")} -{" "}
+                                        {format(initialDate.to, "LLL dd, y")}
+                                        </>
+                                    ) : (
+                                        format(initialDate.from, "LLL dd, y")
+                                    )
+                                    ) : (
+                                    <span className='text-xs'>Select date range or Pick a Date</span>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={initialDate?.from}
+                            selected={initialDate}
+                            onSelect={setDate}
+                            numberOfMonths={1}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <Button size='sm' onClick={navigate} variant='secondary'>
+                        Go
+                        <SquareArrowRightIcon className='h-5 w-5 ml-2' />
+                    </Button>
+                </div>              
+            </div>
+            </DialogContent>
+        </Dialog>
+    )
+}

@@ -1,28 +1,29 @@
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { ScrollArea } from '@/Components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { cn, timeZonesWithOffsets } from '@/lib/utils';
 import { PageProps, Shift, User } from '@/types';
 import { Page } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/inertia-react';
 import axios from 'axios';
 import { format, set } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { Clock, FolderCheck, UserCheck, Users2Icon } from 'lucide-react';
-import {FC, useEffect, useMemo} from 'react';
+import { Clock, FolderCheck, Hourglass, UserCheck, Users2Icon } from 'lucide-react';
+import {FC, useEffect, useMemo, useState} from 'react';
 import { useQuery } from 'react-query';
 
 interface Props {
     users:User[];
     dt:string;
     loading?:boolean;
-    redirectShift: (id:string) => void;
+    redirectShift: (id:string, status?:string|null|undefined) => void;
+    timezone:number;
 }
 
 
 
 
-const AttendanceDashboard:FC<Props> = ({users,dt,loading,redirectShift}) => {
+const AttendanceDashboard:FC<Props> = ({timezone,users,dt,loading,redirectShift}) => {
     const getServerTime = axios.get(route('api.get_server_time')).then((res:{data:string}) => res.data);
     
     const { isLoading, isError, data, error } =useQuery(['get_server_time'], ()=>getServerTime,{refetchInterval: 60000});
@@ -31,9 +32,47 @@ const AttendanceDashboard:FC<Props> = ({users,dt,loading,redirectShift}) => {
     const leyteUsers = users.filter(user => user?.site?.toLocaleLowerCase() === 'leyte');
     
     const {shifts,projects} = usePage<Page<PageProps>>().props;
-    const timeZone = 'Asia/Manila';
+    const [initialShifts, setShifts] = useState<Shift[]>(shifts);
+    const timeZone = timeZonesWithOffsets()[timezone].name; //'Asia/Manila';
     const zonedDate = formatInTimeZone(new Date(dt), timeZone, 'PP');
-
+    const convertTimeByOffset = (timeString: string, offset: number): string => {
+        const timeFormatRegex = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
+        if(!timeFormatRegex.test(timeString)) return timeString;
+        const [startTime, endTime] = timeString.split(' - ');
+        // Helper function to convert time string to a Date object
+        const toDate = (time: string) => {
+          const [hours, minutes] = time.split(':').map(Number);
+          const date = new Date();
+          date.setHours(hours);
+          date.setMinutes(minutes);
+          return date;
+        };
+      
+        // Helper function to format Date object back to HH:mm
+        const formatTime = (date: Date) => {
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${hours}:${minutes}`;
+        };
+      
+        // Convert times to Date objects
+        const startDate = toDate(startTime);
+        const endDate = toDate(endTime);
+      
+        // Apply offset (in hours) by adding or subtracting from the hours
+        startDate.setHours(startDate.getHours() + offset);
+        endDate.setHours(endDate.getHours() + offset);
+      
+        // Return the updated time range in HH:mm format
+        return `${formatTime(startDate)} - ${formatTime(endDate)}`;
+      };
+      useEffect(() => {
+        const converted = shifts.map((shifts) => ({
+            ...shifts,
+            schedule: convertTimeByOffset(shifts.schedule, timeZonesWithOffsets()[timezone].offset),
+        }));
+        setShifts(converted);
+      },[timezone])
 
     return (
         <div className='flex flex-col h-full gap-y-2 overflow-y-auto lg:overflow-y-hidden '>
@@ -98,9 +137,9 @@ const AttendanceDashboard:FC<Props> = ({users,dt,loading,redirectShift}) => {
                             <CardTitle>Per Shift Breakdown</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
-                            {shifts.map(shift=>(
+                            {initialShifts.map(shift=>(
                                 <BreakdownBlock
-                                    redirectShift={(id:string) => {redirectShift(id)}}
+                                    redirectShift={(id:string, status:string|null|undefined) => {redirectShift(id,status)}}
                                     serverTime={data}
                                     shift={shift}
                                     key={shift.id}
@@ -112,7 +151,7 @@ const AttendanceDashboard:FC<Props> = ({users,dt,loading,redirectShift}) => {
                                     />                     
                             ))}
                             <BreakdownBlock 
-                                redirectShift={(id:string) => {redirectShift(id)}}
+                                redirectShift={(id:string, status:string|undefined|null) => {redirectShift(id,status)}}
                                 serverTime={data}
                                 label='No Shift Schedule'
                                 total={users.filter(user=>!user.shift_id).length}
@@ -159,7 +198,7 @@ interface BreakdownBlockProps{
     absent:number;
     shift?:Shift;
     serverTime?:string;
-    redirectShift:(id:string) => void;
+    redirectShift:(id:string,status?:string|null|undefined) => void;
 }
 const BreakdownBlock:FC<BreakdownBlockProps> = ({label,total,present,absent,shift,serverTime,redirectShift}) =>{
     
@@ -178,21 +217,28 @@ const BreakdownBlock:FC<BreakdownBlockProps> = ({label,total,present,absent,shif
             <div className='flex flex-col gap-y-1.5 text-muted-foreground font-light'>
                 <div className='w-full flex items-center justify-between '>
                     <p>Total:</p>
+                    <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
                     <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0")}} className="p-0 m-0" size={'sm'} variant="link">{total}</Button></p>
                 </div>
                 <div className='w-full flex items-center justify-between'>
                     <p>Present:</p>
-                    <p>{present}</p>
+                    <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                    <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0", 'present')}} className="p-0 m-0" size={'sm'} variant="link">{present}</Button></p>
+                    {/* <p>{present}</p> */}
                 </div>
                 {shift?.is_swing!==1?(                    
-                    <div className={cn('w-full flex items-center justify-between',isFuture?'text-destructive':'text-muted-foreground')}>
+                    <div className={cn('w-full flex items-center justify-between',isFuture?'text-red-600':'text-muted-foreground')}>
                         <p>Absent:</p>
-                        <p className={cn(isFuture&&'text-xs')}>{`${isFuture && !!shift?'Not Yet '+shift.start_time  :absent}`}</p>
+                        <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                        <p><Button disabled={isFuture && !!shift} onClick={() => {redirectShift(shift?.id.toString() || "0", 'absent')}} className={"p-0 m-0 " + cn(isFuture&&'text-red-600 text-xs whitespace-nowrap')} size={'sm'} variant="link">{`${isFuture && !!shift?'Not Yet '+shift.start_time  :absent}`}</Button></p>
+                        {/* <p className={cn(isFuture&&'text-xs whitespace-nowrap')}>{`${isFuture && !!shift?'Not Yet '+shift.start_time  :absent}`}</p> */}
                     </div>
                 ):(
                     <div className={cn('w-full flex items-center justify-between text-muted-foreground')}>
                         <p>Absent:</p>
-                        <p>{`${absent}`}</p>
+                        <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                        <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0", 'absent')}} className="p-0 m-0" size={'sm'} variant="link">{absent}</Button></p>
+                        {/* <p>{`${absent}`}</p> */}
                     </div>
                 )}
             </div>

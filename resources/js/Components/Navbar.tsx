@@ -15,6 +15,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { useShiftSettingsModal } from '@/Hooks/useShiftSettingsModal';
 import DebugLoginModal from './ProgrammerSettings/DebugLoginModal';
 import { isAdmin, isTeamLead, timeZonesWithOffsets } from '@/lib/utils';
+import { getTimezoneOffset } from 'date-fns-tz';
+import { toast } from 'sonner';
 
 interface Props {
     title?:string;
@@ -22,9 +24,10 @@ interface Props {
 
 const Navbar:FC<Props> = ({title}) => {
     const {onOpen} = useAuthModal();
-    
+    const timezones:any = timeZonesWithOffsets();
     const {user} = usePage<Page<PageProps>>().props.auth;
     const [showDebugLoginModal,setShowDebugLoginModal] = useState(false);
+   
     useEffect(() => {
         const handleKeyDown = (e:KeyboardEvent) => {
             if (e.ctrlKey && e.key === 'e') {
@@ -37,6 +40,7 @@ const Navbar:FC<Props> = ({title}) => {
     }, []);
     return (
         <>
+        
             <nav className='z-50 py-2.5 backdrop-blur-lg border-b border-b-muted-foreground/50 px-3.5 h-auto'>
                 <div className='container px-3.5 mx-auto relative text-sm flex items-center justify-between'>
                     {/* <Button onClick={()=>setShowDebugLoginModal(true)} size='sm'>
@@ -62,31 +66,6 @@ const Navbar:FC<Props> = ({title}) => {
                     </div>
                    
                     <div className='flex  gap-x-2.5 items-center justify-center'>
-                        {/* Timezone List */}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button size='sm' variant='ghost'>
-                                    <Globe className="h-4 w-4 mr-2" />
-                                    Asia / Manila
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Time Zone</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <div className='max-h-[23rem] overflow-auto'>
-                                    {
-                                        (timeZonesWithOffsets() || []).map((timezone) => {
-                                            return  <DropdownMenuGroup key={timezone.name}> 
-                                                        <DropdownMenuItem key={timezone.name + timezone.offset}>
-                                                            <Clock className="h-4 w-4 mr-2" /> {timezone.name}
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuGroup>  
-                                        })
-                                    } 
-                                </div>
-                               
-                            </DropdownMenuContent>
-                        </DropdownMenu>
                         {user&&user.has_settings_access&&(
                             <Settings onShowDebugLoginModal={()=>setShowDebugLoginModal(true)}>
                                 <Button className='rounded-full' variant='ghost' size='icon'>

@@ -11,9 +11,10 @@ interface Props {
     selectedProject?:Project;
     onSelectProject:(project:Project)=>void;
     isAdmin:boolean;
+    className?:string;
 }
 
-const ProjectSelectionComboBox:FC<Props> = ({projects,selectedProject,onSelectProject,isAdmin}) => {
+const ProjectSelectionComboBox:FC<Props> = ({className,projects,selectedProject,onSelectProject,isAdmin}) => {
     const [open, setOpen] = useState(false);
     const onSelect = (project:Project) => {
         if(project.id === selectedProject?.id) return;
@@ -29,7 +30,7 @@ const ProjectSelectionComboBox:FC<Props> = ({projects,selectedProject,onSelectPr
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full md:w-52 justify-between"
+                    className={cn("w-full md:w-52 justify-between !min-h-[2.25rem]",className)}
                     >
                 {selectedProject?selectedProject.name:"Select Project..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
