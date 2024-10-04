@@ -152,27 +152,13 @@ export const isAdmin = () => {
   user.position == 'QUALITY ASSURANCE AND TRAINING SUPERVISOR' 
 };
 
-export const timeZonesWithOffsets = () => { return [
-    { "name": "UTC", "offset": 0 },
-    { "name": "Asia/Manila", "offset": 0/*8 - commented "8" because this is the default timezone*/ },
-    { "name": "America/New_York", "offset": -5 },
-    { "name": "Europe/London", "offset": 0 },
-    { "name": "America/Los_Angeles", "offset": -8 },
-    { "name": "Europe/Paris", "offset": 1 },
-    { "name": "Asia/Tokyo", "offset": 9 },
-    { "name": "Australia/Sydney", "offset": 10 },
-    { "name": "Asia/Kolkata", "offset": 5.5 },
-    { "name": "Africa/Johannesburg", "offset": 2 },
-    { "name": "America/Sao_Paulo", "offset": -3 },
-    { "name": "Europe/Moscow", "offset": 3 },
-    { "name": "America/Chicago", "offset": -6 },
-    { "name": "Asia/Dubai", "offset": 4 },
-    { "name": "America/Denver", "offset": -7 },
-    { "name": "America/Toronto", "offset": -5 },
-    { "name": "Europe/Berlin", "offset": 1 },
-    { "name": "America/Phoenix", "offset": -7 },
-    { "name": "Asia/Singapore", "offset": 8 },
-    { "name": "Pacific/Auckland", "offset": 12 }
+export const timeZonesWithOffsets = () => { 
+  const UTC_8 = 8;
+  return [
+    { "name": "Asia/Manila", "offset": 8 /*8 - commented "8" because this is the default timezone*/ },
+    { "name": "America/New_York", "offset": -4 },
+    { "name": "Europe/London", "offset": 1 },
+   
 ];}
 export const AttendanceStatus = (code:number) => {
 

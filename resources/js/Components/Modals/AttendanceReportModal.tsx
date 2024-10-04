@@ -306,7 +306,7 @@ const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
                     const cappedSeconds = seconds > 32400 ? 32400 : seconds;
                     const tardySeconds = attendance.shift?.is_swing === 1 ? 0 : realTardySeconds;
 
-                    if(attendance.time_out && attendance.time_in) return secondsToHms((cappedSeconds-tardySeconds));
+                    if(attendance.time_out && attendance.time_in) return secondsToHms((cappedSeconds));
                 }
                 
                  // return "No Time In/Out";
@@ -338,7 +338,7 @@ const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
                 tIn(),
                 tOut(),
                 isTardy(),
-                !user.attendances[0]?.shift?.schedule || !user.shift?'No Shift':totHrs(),
+                !user.attendances[0]?.shift?.schedule || !user.shift?'No Shift': totHrs(),
                 actualHrs(),
             ];
             acc.push(row);

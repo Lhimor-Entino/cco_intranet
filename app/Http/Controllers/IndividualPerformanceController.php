@@ -260,6 +260,8 @@ class IndividualPerformanceController extends Controller
     /*END OF ACCESS HANDLERS---------------------------------------------------------------*/
     public function team(Request $request, $team_id = null, $project_id = null)
     {
+        $allocated = [];
+        $reference = [];
         $user = Auth::user();
         $has_any_team = Team::count() > 0;
         if (!$has_any_team) {
@@ -357,6 +359,7 @@ class IndividualPerformanceController extends Controller
             }
         }
 
+
         $breakdown = IndividualPerformanceUserMetric::select(
             'individual_performance_metric_id',
             'metric_name as Metric',
@@ -382,6 +385,7 @@ class IndividualPerformanceController extends Controller
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
             ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy(
+                'individual_performance_user_metrics.date',
                 'individual_performance_user_metrics.individual_performance_metric_id',
                 'individual_performance_metrics.metric_name',
                 'users.team_id',
@@ -389,16 +393,36 @@ class IndividualPerformanceController extends Controller
             )
             /**Sorted by metrics position. commented by: JOSH**/
             ->orderBy('individual_performance_metrics.position', 'asc')
-            ->get()
+            ->get()->map(function ($data) use (&$allocated, &$reference) {
+                /**
+                 * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
+                 * Note: Since duration format is saved as minutes.
+                 **/
+                $metric_name = $data['Metric'];
+                if (!array_key_exists($metric_name, $reference)) {
+                    array_push($allocated, [
+                        'individual_performance_metric_id' => $data['individual_performance_metric_id'],
+                        'Metric' => $data['Metric'],
+                        'team_id' => $data['team_id'],
+                        'Goal' => self::UnitConversion(["unit" => $data['Unit'], "value" =>  $data['Goal']]),
+                        'Unit' => $data['Unit'],
+                        'Days' => 1,
+                        'Total' => $data['Average'],
+                        'Average' => $data['Average'],
+                    ]);
+                    $reference[$metric_name] = (count($allocated) - 1);
+                } else {
+                    $index = $reference[$metric_name];
+                    $allocated[$index]['Days'] += 1;
+                    $allocated[$index]['Total'] += $data['Average'];
+                    $metric_avg = round($allocated[$index]['Total']  / $allocated[$index]['Days'], 2);
+                    $allocated[$index]['Average'] =  $metric_avg;
+                }
+                return $allocated;
+            })
             ->toArray();
+        // return $allocated;
 
-        /**
-         * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
-         * Note: Since duration format is saved as minutes.
-         **/
-        foreach ($breakdown as $index => $data) {
-            $breakdown[$index]['Goal'] = self::UnitConversion(["unit" => $data['Unit'], "value" =>  $breakdown[$index]['Goal']]);
-        }
 
 
 
@@ -533,7 +557,7 @@ class IndividualPerformanceController extends Controller
             'teams' => $this->is_admin() ? Team::orderBy('name')->get() : ($this->is_team_lead() ? $teams : [$team]),
             'agents' => $users,
             'user_breakdown' => $user_breakdown,
-            'breakdown' => $breakdown,
+            'breakdown' => $allocated,
             'team_trends' => $team_trends,
             'top_performers' => array_values($top_performers)
         ]);
@@ -541,6 +565,8 @@ class IndividualPerformanceController extends Controller
 
     public function project(Request $request, $project_id = null)
     {
+        $allocated = [];
+        $reference = [];
         $user = Auth::user();
         $has_any_project = Project::count() > 0;
         if (!$has_any_project) return self::hasNoProject($user);
@@ -606,6 +632,7 @@ class IndividualPerformanceController extends Controller
             ->get()
             ->toArray();
 
+
         $user_breakdown = [];
         foreach ($user_breakdown_raw as $user) {
             //check if user is already in the array
@@ -661,6 +688,7 @@ class IndividualPerformanceController extends Controller
             //add the line below to exclude user_metrics that have 0 as value - this are ticked as not applicable in the frontend
             ->where('individual_performance_user_metrics.is_applicable', '>', 0)
             ->groupBy(
+                'individual_performance_user_metrics.date',
                 'individual_performance_user_metrics.individual_performance_metric_id',
                 'individual_performance_metrics.metric_name',
                 'users.project_id',
@@ -668,18 +696,35 @@ class IndividualPerformanceController extends Controller
             )
             /**Sorted by metrics position. commented by: JOSH**/
             ->orderBy('individual_performance_metrics.position', 'asc')
-            ->get()
+            ->get()->map(function ($data) use (&$allocated, &$reference) {
+                /**
+                 * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
+                 * Note: Since duration format is saved as minutes.
+                 **/
+                $metric_name = $data['Metric'];
+                if (!array_key_exists($metric_name, $reference)) {
+                    array_push($allocated, [
+                        'individual_performance_metric_id' => $data['individual_performance_metric_id'],
+                        'Metric' => $data['Metric'],
+                        'project_id' => $data['project_id'],
+                        'Goal' => self::UnitConversion(["unit" => $data['Unit'], "value" =>  $data['Goal']]),
+                        'Unit' => $data['Unit'],
+                        'Days' => 1,
+                        'Total' => $data['Average'],
+                        'Average' => $data['Average'],
+                    ]);
+                    $reference[$metric_name] = (count($allocated) - 1);
+                } else {
+                    $index = $reference[$metric_name];
+                    $allocated[$index]['Days'] += 1;
+                    $allocated[$index]['Total'] += $data['Average'];
+                    $metric_avg = round($allocated[$index]['Total']  / $allocated[$index]['Days'], 2);
+                    $allocated[$index]['Average'] =  $metric_avg;
+                }
+                return $allocated;
+            })
             ->toArray();
-        /**
-         * CONVERT GOAL VALUE INTO RESPECTIVE UNIT (DURATION) Commented by: JOSH
-         * Note: Since duration format is saved as minutes.
-         **/
-        foreach ($breakdown as $index => $data) {
-            $breakdown[$index]['Goal'] = self::UnitConversion(["unit" => $data['Unit'], "value" => floatval($data['Goal'])]);
-        }
-
-
-
+        // return $allocated;
         $project_trends = IndividualPerformanceUserMetric::select(
             'individual_performance_user_metrics.individual_performance_metric_id',
             'individual_performance_metrics.metric_name',
@@ -801,7 +846,7 @@ class IndividualPerformanceController extends Controller
             'projects' => $this->is_admin() ? Project::orderBy('name')->get() : [$project],
             'agents' => $users,
             'user_breakdown' => $user_breakdown,
-            'breakdown' => $breakdown,
+            'breakdown' => $allocated,
             'project_trends' => $project_trends,
             'project_histories' => $project_history,
             'top_performers' => array_values($top_performers)
