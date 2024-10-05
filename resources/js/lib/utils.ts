@@ -178,3 +178,55 @@ export const AttendanceStatus = (code:number) => {
   return StatusCode;
   
 }
+
+export const convertTimeByOffset = (timeString: string, offset: number, timezone: string): string => {
+  const timeFormatRegex = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
+  if (!timeFormatRegex.test(timeString)) return timeString;
+
+  const [startTime, endTime] = timeString.split(' - ');
+
+  // Helper function to convert time string to a Date object in the specified timezone
+  const toDate = (time: string): Date => {
+      const [hours, minutes] = time.split(':').map(Number);
+      const date = new Date();
+      date.setUTCHours(hours, minutes, 0, 0); // Set time in UTC
+      return new Date(date.toLocaleString('en-PH', { timeZone: timezone })); // Convert to the specified timezone
+  };
+
+  // Helper function to format Date object back to HH:mm
+  const formatTime = (date: Date): string => {
+      const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone };
+      return new Intl.DateTimeFormat('en-PH', options).format(date);
+  };
+
+  // Convert times to Date objects
+  const startDate = toDate(startTime);
+  const endDate = toDate(endTime);
+
+  // Apply offset (in hours) by adding or subtracting from the hours
+  startDate.setUTCHours(startDate.getUTCHours() - offset);
+  endDate.setUTCHours(endDate.getUTCHours() - offset);
+
+  // Return the updated time range in HH:mm format
+  return `${formatTime(startDate)} - ${formatTime(endDate)}`;
+};
+export const InOutByOffset = (timeString: string, offset: number, timezone: string): string => {
+ 
+  const timeFormatRegex = /^\d{2}:\d{2}:\d{2}$/;
+  if (!timeFormatRegex.test(timeString)) return timeString;
+  const toDate = (time: string): Date => {
+      const [hours, minutes, seconds] = time.split(':').map(Number);
+      const date = new Date();
+      date.setUTCHours(hours, minutes, seconds, 0); // Set time in UTC
+      return new Date(date.toLocaleString('en-PH', { timeZone: timezone })); // Convert to the specified timezone
+  };
+
+  // Helper function to format Date object back to HH:mm
+  const formatTime = (date: Date): string => {
+      const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit',second: '2-digit', hour12: false, timeZone: timezone };
+      return new Intl.DateTimeFormat('en-PH', options).format(date);
+  };
+  const time = toDate(timeString);
+  time.setUTCHours(time.getUTCHours() - offset);
+  return  `${formatTime(time)}`;
+}

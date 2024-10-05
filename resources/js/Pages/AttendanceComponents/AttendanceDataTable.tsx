@@ -18,17 +18,20 @@ import {
     TableHeader,
     TableRow,
     } from "@/Components/ui/table"
-    import { useState } from "react";
+    import { useEffect, useState } from "react";
     import { DataTablePagination } from "../../Components/DataTablePagination";
+import { timeZonesWithOffsets } from "@/lib/utils";
     
     interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
-    data: TData[]
+    data: TData[];
+    timezone:number;
     }
     
     export function AttendanceDataTable<TData, TValue>({
         columns,
         data,
+        timezone,
         }: DataTableProps<TData, TValue>) {
         const [sorting, setSorting] = useState<SortingState>([]);
         const table = useReactTable({
@@ -42,7 +45,6 @@ import {
             sorting,
         },
         });
-    
         return (
             <div className="rounded-md border  h-full flex flex-col gap-y-2.5 pb-2.5">
                 <div className="flex-1 overflow-y-auto flex">
@@ -82,7 +84,7 @@ import {
                             ) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                                No results.
+                                    No results.
                                 </TableCell>
                             </TableRow>
                             )}

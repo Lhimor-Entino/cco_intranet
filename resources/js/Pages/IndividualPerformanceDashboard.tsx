@@ -337,7 +337,16 @@ interface Filter {
     setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }
 export const ModalFilter:FC<Filter> = ({initialDate,setDate,selectedUser, setSelectedUser, is_admin,is_team_leader,project,projects,project_histories,agents,date_range,agent}) => {
-    const onProjectSelect = (project:Project) => Inertia.get(route('individual_performance_dashboard.index',{project_id:project.id}));
+    const queryParams = new URLSearchParams(window.location.search);
+    const isOpen:boolean =  queryParams.get('open') === "true" ??false;
+    const onProjectSelect = (project:Project) => {
+        const date = parseDateRange(initialDate);
+        Inertia.get(route('individual_performance_dashboard.index',{
+            project_id:project.id,
+            date,
+            open:'true'
+        }));
+    }
     const navigate = () => {
         if(!project) return toast.error('Please select a project');
         if(!selectedUser) return toast.error('Please select an agent');
@@ -350,7 +359,7 @@ export const ModalFilter:FC<Filter> = ({initialDate,setDate,selectedUser, setSel
         }));
     };
     return (
-        <Dialog>
+        <Dialog defaultOpen={isOpen}>
           <DialogTrigger asChild>
                 <Button variant={"outline"} size={"sm"} className='min-w-[7.5rem]' >
                     <Filter className="h-4 w-4 mr-2"/>

@@ -179,8 +179,10 @@ interface Filter {
     date:DateRange | undefined;
     setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }
-export const ModalFilter:FC<Filter> = ({is_team_leader,is_admin,date,setDate,projects,project,project_histories}) => {
-    const navigate = (project:Project) => {
+export const ModalFilter:FC<Filter> = ({is_team_leader,is_admin,date,setDate,projects,project:initial_project,project_histories}) => {
+    const [project,setProject] = useState<Project>(initial_project);
+    const onProjectSelect = (p:Project) => setProject(p);
+    const navigate = () => {
         const new_date = parseDateRange(date);
         Inertia.get(route('individual_performance_dashboard.project',{project_id:project.id,date:new_date}));
     }
@@ -205,7 +207,7 @@ export const ModalFilter:FC<Filter> = ({is_team_leader,is_admin,date,setDate,pro
             <Separator className='border'/>
             <div className="grid w-full items-center gap-1.5">
                 <Label>Project</Label>
-                <ProjectSelectionComboBox className="!w-full" projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} isAdmin={is_admin || is_team_leader} onSelectProject={navigate} />
+                <ProjectSelectionComboBox className="!w-full" projects={(is_team_leader && !is_admin)? project_histories : projects} selectedProject={project} isAdmin={is_admin || is_team_leader} onSelectProject={onProjectSelect} />
             </div>
             <div className="grid w-full items-center gap-1.5">
                 <Label>Date Range</Label>
@@ -247,7 +249,7 @@ export const ModalFilter:FC<Filter> = ({is_team_leader,is_admin,date,setDate,pro
                                     />
                                     </PopoverContent>
                                 </Popover>
-                                <Button size='sm' onClick={() => {navigate(project);}} variant='secondary' className='rounded-l-none'>
+                                <Button size='sm' onClick={navigate} variant='secondary' className='rounded-l-none'>
                                     Go
                                     <SquareArrowRightIcon className='h-5 w-5 ml-2' />
                                 </Button>

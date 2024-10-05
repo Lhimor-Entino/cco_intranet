@@ -1,7 +1,7 @@
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { ScrollArea } from '@/Components/ui/scroll-area';
-import { cn, timeZonesWithOffsets } from '@/lib/utils';
+import { cn, convertTimeByOffset, timeZonesWithOffsets } from '@/lib/utils';
 import { PageProps, Shift, User } from '@/types';
 import { Page } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/inertia-react';
@@ -35,37 +35,6 @@ const AttendanceDashboard:FC<Props> = ({timezone,users,dt,loading,redirectShift}
     const [initialShifts, setShifts] = useState<Shift[]>(shifts);
     const timeZone = timeZonesWithOffsets()[timezone].name; //'Asia/Manila';
     const zonedDate = formatInTimeZone(new Date(dt), timeZone, 'PP');
-    const convertTimeByOffset = (timeString: string, offset: number, timezone: string): string => {
-        const timeFormatRegex = /^(?:[01]\d|2[0-3]):[0-5]\d - (?:[01]\d|2[0-3]):[0-5]\d$/;
-        if (!timeFormatRegex.test(timeString)) return timeString;
-    
-        const [startTime, endTime] = timeString.split(' - ');
-    
-        // Helper function to convert time string to a Date object in the specified timezone
-        const toDate = (time: string): Date => {
-            const [hours, minutes] = time.split(':').map(Number);
-            const date = new Date();
-            date.setUTCHours(hours, minutes, 0, 0); // Set time in UTC
-            return new Date(date.toLocaleString('en-PH', { timeZone: timezone })); // Convert to the specified timezone
-        };
-    
-        // Helper function to format Date object back to HH:mm
-        const formatTime = (date: Date): string => {
-            const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timezone };
-            return new Intl.DateTimeFormat('en-PH', options).format(date);
-        };
-    
-        // Convert times to Date objects
-        const startDate = toDate(startTime);
-        const endDate = toDate(endTime);
-    
-        // Apply offset (in hours) by adding or subtracting from the hours
-        startDate.setUTCHours(startDate.getUTCHours() - offset);
-        endDate.setUTCHours(endDate.getUTCHours() - offset);
-    
-        // Return the updated time range in HH:mm format
-        return `${formatTime(startDate)} - ${formatTime(endDate)}`;
-    };
       useEffect(() => {
         const converted = shifts.map((shifts) => ({
             ...shifts,

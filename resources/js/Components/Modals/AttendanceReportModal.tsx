@@ -4,7 +4,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
-import { AttendanceStatus, cn, convertToTimezone, ExportToExcel, parseDateRange } from "@/lib/utils";
+import { AttendanceStatus, cn, convertTimeByOffset, convertToTimezone, ExportToExcel, InOutByOffset, parseDateRange, timeZonesWithOffsets } from "@/lib/utils";
 import { CalendarIcon, Loader2, ShieldAlertIcon } from "lucide-react";
 import { format, set, addDays } from 'date-fns';
 import { Calendar } from "../ui/calendar";
@@ -14,17 +14,18 @@ import { User, UserAttendance } from "@/types";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 
-const AttendanceReportModal:FC = () => {
+const AttendanceReportModal:FC= () => {
+    
     const {isOpen,onClose} = useAttendanceReportModal();
     const [loading,setLoading] = useState(false);
     const [initialDate, setDate] = useState<DateRange | undefined>();
     const [oldFormat, setOldFormat] = useState(false);
+    
     const disabledDates = {
         from: addDays(new Date(),2),
         //add 1 year
         to: set(new Date(),{year:new Date().getFullYear()+1})
     }
-
     const onSubmit = () =>{
         if(!initialDate?.from) return toast.info('Please select a date range');
         const fileName = `Attendance Report ${format(initialDate.from,'yyyy-MM-dd')} - ${format(initialDate.to || initialDate.from,'yyyy-MM-dd')}`;
@@ -39,8 +40,10 @@ const AttendanceReportModal:FC = () => {
           date
         })
         .then(async(response:{data:User[]})=>{
+            const timezone = parseInt(localStorage.getItem('myTimezone')?? "0",10);
             if(!oldFormat){
-                const report = await newReportFormat(response.data);
+                
+                const report = await newReportFormat(response.data,timezone);
                 const incentiveReport = await formatIncentiveReport(response.data);
                 await ExportToExcel(report,fileName);
                 await ExportToExcel(incentiveReport,incentiveFileName);
@@ -223,7 +226,7 @@ const formatTardinessReport:(data:User[])=>Promise<any[]>= async(data) => {
     return [header, ...rows]
 }
 
-const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
+const newReportFormat:(data:User[], timezone:number)=>Promise<any[]>= async(data,timezone) =>{
     /*
     arrange in the format below:
     Date	Name	Site	Project	Employee ID	Shift	Time In	Time Out	Tardy	Total Hours Actual Hours
@@ -268,7 +271,8 @@ const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
     }
 
     const header = ['Active / Inactive','Date','Name','Site','Project','Employee ID','Shift','Time In','Time Out','Tardy','Total Hours','Actual Hours'];
-    const rows = data.reduce<any[]>((acc, user) => {
+    const rows = (index:number) => data.reduce<any[]>((acc, user) => {
+        console.log('Timezone on Generate: ', index)
         user.attendances.forEach(attendance => {
             const tIn = () =>{
                 if(attendance.time_in) return attendance.time_in;
@@ -327,16 +331,16 @@ const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
 
            
             // Modify this line to add Active / Inactive based on date effectivity
-            const row: string[] = [
+            const row : string[] = [
                 isActive(user,attendance),
                 attendance.date,
                 `${user.last_name}, ${user.first_name}`,
                 user.site,
                 user.project?.name || 'No Project',
                 user.company_id,
-                user.attendances[0].shift?.schedule || 'No Shift',
-                tIn(),
-                tOut(),
+                convertTimeByOffset( user.attendances[0].shift?.schedule || 'No Shift',timeZonesWithOffsets()[index].offset,timeZonesWithOffsets()[index].name),
+                InOutByOffset(tIn(),timeZonesWithOffsets()[index].offset,timeZonesWithOffsets()[index].name) ,
+                InOutByOffset(tOut(),timeZonesWithOffsets()[index].offset,timeZonesWithOffsets()[index].name) ,
                 isTardy(),
                 !user.attendances[0]?.shift?.schedule || !user.shift?'No Shift': totHrs(),
                 actualHrs(),
@@ -345,7 +349,7 @@ const newReportFormat:(data:User[])=>Promise<any[]>= async(data) =>{
         });
         return acc;
     }, []);
-    return [header, ...rows]
+    return [header, ...rows(timezone)]
 }
 
 

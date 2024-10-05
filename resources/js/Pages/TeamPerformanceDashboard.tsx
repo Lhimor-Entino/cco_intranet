@@ -179,15 +179,21 @@ interface Filter {
     date:DateRange | undefined;
     setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }
-export const ModalFilter:FC<Filter> = ({date,setDate,teams,team,project,team_projects}) => {
+export const ModalFilter:FC<Filter> = ({date,setDate,teams,team,project:initial_project,team_projects}) => {
     const navigate = () => {
         const new_date = parseDateRange(date);
-        Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id,date:new_date}));
+        Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id,project_id: project.id,date:new_date}));
     }
-    const onTeamSelect = (t:Team) =>Inertia.get(route('individual_performance_dashboard.team',{team_id:t.id}));
-    const onProjectSelect = (p:Project) => Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id, project_id:p.id}));
+    const queryParams = new URLSearchParams(window.location.search);
+    const isOpen:boolean =  queryParams.get('open') === "true" ??false;
+    const [project, setProject] = useState<Project>(initial_project);
+    const onTeamSelect = (t:Team) => {
+        const new_date = parseDateRange(date);
+        Inertia.get(route('individual_performance_dashboard.team',{team_id:t.id,date:new_date,open:'true'}));
+    }
+        const onProjectSelect = (p:Project) => setProject(p); //Inertia.get(route('individual_performance_dashboard.team',{team_id:team.id, project_id:p.id}));
     return (
-        <Dialog>
+        <Dialog defaultOpen={isOpen}>
           <DialogTrigger asChild>
                 <Button variant={"outline"} size={"sm"} className='min-w-[7.5rem]' >
                     <Filter className="h-4 w-4 mr-2"/>

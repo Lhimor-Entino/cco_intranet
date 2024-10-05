@@ -202,6 +202,7 @@ const Attendance:FC<Props> = ({dt}) => {
                         )
                     }
                     {!isLoading&&<AttendanceHeader 
+                    date_selected={dt}
                     resetProjectFilter={()=>setProjectFilterIds([])} 
                     onProjectFilter={onProjectFilter} 
                     projectFilterIds={projectFilterIds} 
@@ -221,7 +222,7 @@ const Attendance:FC<Props> = ({dt}) => {
                     {
                         !isLoading  && filteredEmployees && !showDashboard && (
                             <div className='flex-1 overflow-y-hidden'>
-                                <AttendanceDataTable columns={AttendanceColumns} data={filteredEmployees} />
+                                <AttendanceDataTable timezone={timezoneVal}  columns={AttendanceColumns({timeZone: timezoneVal})} data={filteredEmployees} />
                             </div>
                         )
                     }

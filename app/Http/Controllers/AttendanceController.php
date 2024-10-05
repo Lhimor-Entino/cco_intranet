@@ -141,21 +141,22 @@ class AttendanceController extends Controller
 
     public function generate_report(Request $request)
     {
+
         $cco_users = User::withoutGlobalScope('is_archived')->select('company_id')->where('department', '<>', 'SOFTWARE')->get();
         $ids = $cco_users->pluck('company_id');
 
 
         $from = Carbon::parse($request->date['from'])->format('Y-m-d');
-        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->addDay()->format('Y-m-d') : $from;
+        // $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->addDay()->format('Y-m-d') : $from;
+        $to = isset($request->date['to']) ? Carbon::parse($request->date['to'])->format('Y-m-d') : $from;
         //create an array of dates in 'Y-m-d' format between the two dates
         $dates = [];
         $start_date = $from;
         $end_date = $to;
-        while (strtotime($start_date) <= strtotime($end_date)) {
+        while (strtotime($start_date) < strtotime($end_date)) {
             $dates[] = $start_date;
             $start_date = date("Y-m-d", strtotime("+1 day", strtotime($start_date)));
         }
-
         foreach ($dates as $date) {
             $attendaces = UserAttendance::with(['user', 'user.shift'])->where('date', $date)->get();
             if (count($attendaces) < 1) {

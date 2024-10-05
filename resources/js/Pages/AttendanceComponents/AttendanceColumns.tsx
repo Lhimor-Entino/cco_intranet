@@ -7,7 +7,7 @@ import { useDeleteAnnouncementModal } from "@/Hooks/useDeleteAnnouncementModal"
 import { useEmployeeModal } from "@/Hooks/useEmployeeModal"
 import { useShiftModal } from "@/Hooks/useShiftModal"
 import { useUpdateAttendaceModal } from "@/Hooks/useUpdateAttendaceModal"
-import { AttendanceStatus, cn } from "@/lib/utils"
+import { AttendanceStatus, cn, convertTimeByOffset, InOutByOffset, timeZonesWithOffsets } from "@/lib/utils"
 import { Announcement, PageProps, User } from "@/types"
 import { Inertia, Page } from "@inertiajs/inertia"
 import { usePage } from "@inertiajs/inertia-react"
@@ -17,10 +17,12 @@ import { CalendarClockIcon, ChevronsLeftRight, FolderOpen, MailWarning, MoreHori
 import { toast } from "sonner"
 import { useAttendanceDate } from "./AttendanceHooks.ts/useAttendanceDate"
 
+interface Props {
+    timeZone:number;
+}
 
-export const AttendanceColumns
 
-: ColumnDef<User>[] = [
+export const AttendanceColumns = ({timeZone}: Props) : ColumnDef<User>[] => [
     {
         accessorKey: "company_id",
         header: ({column})=><Button  className='w-full text-primary px-0'  variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>ID<ChevronsLeftRight className="ml-2 h-4 w-4 rotate-90" /></Button>,
@@ -37,7 +39,7 @@ export const AttendanceColumns
                         <TriangleAlert className="h-4 w-4" />
                         <span>Shift Not Set!</span>
                     </div>
-                ):row.original.attendances[0].shift.schedule}
+                ):convertTimeByOffset(row.original.attendances[0].shift.schedule, timeZonesWithOffsets()[timeZone].offset, timeZonesWithOffsets()[timeZone].name)}
             </div>
         )
     },
@@ -61,7 +63,7 @@ export const AttendanceColumns
             const editedByDt = (!!row.original.attendances[0].edited_time_in_date)? ` on ${format(new Date(row.original.attendances[0].edited_time_in_date),'Pp')}`:null;
             return (
             <div className="flex flex-col gap-y-0.5">
-                <p>{`${row.original?.attendances[0]?.time_in||'No Time-in Record'}`}</p>
+                <p>{ InOutByOffset(row.original?.attendances[0]?.time_in || 'No Time-in Record', timeZonesWithOffsets()[timeZone].offset, timeZonesWithOffsets()[timeZone].name) }</p>
                 {row.original.attendances[0]?.edited_time_in===1 && (
                     <>
                         <p className="text-xs italic text-muted-foreground">{editedByMsg}</p>
@@ -84,7 +86,7 @@ export const AttendanceColumns
             const editedByDt = (!!row.original.attendances[0].edited_time_out_date)? ` on ${format(new Date(row.original.attendances[0].edited_time_out_date),'Pp')}`:null;
             return (
             <div className="flex flex-col gap-y-0.5">
-                <p>{`${row.original?.attendances[0]?.time_out||'No Time-out Record'}`}</p>
+                <p>{InOutByOffset(row.original?.attendances[0]?.time_out || 'No Time-in Record', timeZonesWithOffsets()[timeZone].offset, timeZonesWithOffsets()[timeZone].name)}</p>
                 {row.original.attendances[0]?.edited_time_out===1 && (
                     <>
                         <p className="text-xs italic text-muted-foreground">{editedByMsg}</p>
