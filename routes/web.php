@@ -147,6 +147,7 @@ Route::middleware(['auth'])->group(function () {
 
 include('individual_performance_dashboard.php');
 include('training_info_system.php');
+include('quality_management_system.php');
 
 
 

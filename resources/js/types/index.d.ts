@@ -208,3 +208,12 @@ export interface Setting{
     value:string;
     tag:string;
 }
+
+export interface QMS{
+    id:number;
+    user_id:number;
+    tl_user_id:number;
+    user:User;
+    team_leader:User;
+    score:number; // Temporary
+}
