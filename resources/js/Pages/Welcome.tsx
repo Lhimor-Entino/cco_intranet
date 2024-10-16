@@ -115,7 +115,7 @@ export const NavItems = (isAdmin = false, isTeamLead = false): NavLink[]  => [
             },
             {
                 name: "Quality Management System",
-                href: "#",
+                href: route('quality_management_system.index'),
                 accessible: true,
             },
             {

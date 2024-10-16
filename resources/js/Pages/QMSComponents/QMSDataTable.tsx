@@ -27,7 +27,7 @@ export function QMSDataTable<TData,TValue>({columns,data}:
                 <Table className="h-auto">
                     <TableHeader className="sticky top-0 bg-background z-50">
                     {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow>
+                        <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => {
                                 return (
                                     <TableHead key={header.id}>

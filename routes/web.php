@@ -10,6 +10,7 @@ use App\Http\Controllers\IndividualPerformanceController;
 use App\Http\Controllers\MyPageController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectHistoryController;
+use App\Http\Controllers\QMSController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TrainingAssessmentController;
@@ -148,8 +149,6 @@ Route::middleware(['auth'])->group(function () {
 include('individual_performance_dashboard.php');
 include('training_info_system.php');
 include('quality_management_system.php');
-
-
 
 
 

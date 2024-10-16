@@ -13,15 +13,17 @@ class CreateMetricSettingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('metric_settings', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('individual_performance_metric_id');
-            $table->string('name');
-            $table->string('value');
-            $table->string('tag');
-            $table->unique(['individual_performance_metric_id', 'name', 'tag']);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('metric_settings')) {
+            Schema::create('metric_settings', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('individual_performance_metric_id');
+                $table->string('name');
+                $table->string('value');
+                $table->string('tag');
+                $table->unique(['individual_performance_metric_id', 'name', 'tag']);
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -32,6 +34,7 @@ class CreateMetricSettingsTable extends Migration
     public function down()
     {
         // First, drop the composite unique index before dropping the table
+
         Schema::table('metric_settings', function (Blueprint $table) {
             $table->dropUnique(['individual_performance_metric_id', 'name', 'tag']);
         });
