@@ -16,7 +16,7 @@ import { Close } from "@radix-ui/react-dialog";
 import { Separator } from "@radix-ui/react-select";
 import { addDays, addYears, format } from "date-fns";
 import {  CalendarClockIcon, CalendarIcon, Check, CheckCheck, ChevronsUpDownIcon, Clock, FileSpreadsheet, Filter, GanttChart, Globe, LayoutDashboard, RefreshCw, SearchIcon, SlidersHorizontal, SquareArrowRightIcon, UserIcon, X, XIcon } from "lucide-react";
-import { ChangeEvent, FC, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, FC, ReactNode, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "react-query";
 import { toast } from "sonner";
 
@@ -52,6 +52,8 @@ const AttendanceHeader:FC<Props> = ({date_selected,timezone, site,shift,onTimezo
             <div className="flex items-center justify-between gap-x-2 h-auto">
                 <div className="flex items-center gap-x-2">
                     <FilterModal 
+                        showDashboard={showDashboard}
+                        showDashboardToggle={showDashboardToggle}
                         date={new Date(date_selected)}
                         search = {strFilter}
                         searchEvent = {onInputChange} 
@@ -211,10 +213,12 @@ interface Filter{
     onProjectFilter:(project_id:string)=>void;
     projectFilterIds:string[];
     resetProjectFilter:()=>void;
-    date:Date
+    date:Date,
+    showDashboardToggle:()=>void;
+    showDashboard:boolean;
   
 }
-const FilterModal:FC<Filter>  = ({date:selectedDate,site,siteEvent,resetProjectFilter,projectFilterIds,onProjectFilter,head,setHead,search, searchEvent, shiftEvent, shift,employees}) => {
+const FilterModal:FC<Filter>  = ({showDashboard,showDashboardToggle,date:selectedDate,site,siteEvent,resetProjectFilter,projectFilterIds,onProjectFilter,head,setHead,search, searchEvent, shiftEvent, shift,employees}) => {
     const {shifts,projects} = usePage<Page<PageProps>>().props;
     const [open, setOpen] = useState(false)
     const [filter,setFilter] = useState<string>('');
@@ -222,6 +226,17 @@ const FilterModal:FC<Filter>  = ({date:selectedDate,site,siteEvent,resetProjectF
         if(filter === '') return true;
         return employee.first_name.toLowerCase().includes(filter.toLowerCase()) || employee.last_name.toLowerCase().includes(filter.toLowerCase());
     });
+    const btnRef = useRef<HTMLButtonElement>(null);
+    
+    const onKeyEvent = (e:React.KeyboardEvent<HTMLInputElement>) => {
+        
+        if(e.key === 'Enter') {
+            if(showDashboard) {showDashboardToggle();}
+            if(btnRef.current){
+                btnRef.current.click();
+            }
+        }
+    }
     const [loading,setLoading] = useState(false);
     const selectedHead = (employees || []).filter(employee => employee.id === head)[0];
     const [date,setDate] = useState<Date>();
@@ -242,10 +257,11 @@ const FilterModal:FC<Filter>  = ({date:selectedDate,site,siteEvent,resetProjectF
         //     onFinish:()=>setLoading(false)
         });
     }
+    
     return (
-        <Dialog>
+        <Dialog >
             <DialogTrigger asChild>
-                <Button variant={"outline"} size={"sm"} >
+                <Button  variant={"outline"} size={"sm"} >
                     <Filter className="h-4 w-4 mr-2"/>
                     Filter
                 </Button>
@@ -325,7 +341,7 @@ const FilterModal:FC<Filter>  = ({date:selectedDate,site,siteEvent,resetProjectF
                     <Label>Agent</Label>
                     <div className='flex items-center w-full'>
                         <div className="w-full relative">                              
-                            <Input  value={search} onChange={searchEvent} placeholder=" Filter by Company ID/Last Name"  className=" w-full" />
+                            <Input onKeyDown={(e) => onKeyEvent(e)} value={search} onChange={searchEvent} placeholder=" Filter by Company ID/Last Name"  className=" w-full" />
                         </div>
                         <SearchIcon className="absolute right-3 mr-5 " />
                     </div>
@@ -429,7 +445,7 @@ const FilterModal:FC<Filter>  = ({date:selectedDate,site,siteEvent,resetProjectF
                 </div>
                 <DialogFooter>
                     <Close>
-                        <Button variant={"default"} size={"sm"} >
+                        <Button ref={btnRef} variant={"default"} size={"sm"} >
                             <Check className="mr-2"/>
                             Done
                         </Button>
