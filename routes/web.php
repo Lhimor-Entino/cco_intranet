@@ -120,6 +120,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('hrms')->name('hrms.')->group(function () {
         Route::post('sync', [HRMSController::class, 'sync'])->name('sync');
         Route::get('auto-create-teams', [HRMSController::class, 'auto_create_teams'])->name('auto_create_teams');
+        Route::get('auto_create_qa_group', [HRMSController::class, 'auto_create_qa_group'])->name('auto_create_qa_group');
         Route::get('leave-planner', [HRMSController::class, 'leave_planner'])->name('leave_planner');
         Route::get('get-leave-credits/{company_id?}', [HRMSController::class, 'get_leave_credits'])->name('get_leave_credits');
         Route::get('get-last-5-leave-requests/{company_id?}', [HRMSController::class, 'get_last_5_leave_requests'])->name('get_last_5_leave_requests');

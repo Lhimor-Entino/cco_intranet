@@ -7,7 +7,7 @@ import { PageProps, Project } from '@/types';
 import { Inertia, Page } from '@inertiajs/inertia';
 import ProjectSelectionComboBox from './IndividualPerformance/ProjectSelectionComboBox';
 import { Button } from '@/Components/ui/button';
-import { BetweenHorizontalStart, CircleCheckBig, CircleHelp, HashIcon, Info, Loader2, PackagePlusIcon, Pencil, PencilIcon, Save, Trash2Icon } from 'lucide-react';
+import { BetweenHorizontalStart, CircleCheckBig, CircleHelp, HashIcon, Heading1, Info, Loader2, PackagePlusIcon, Pencil, PencilIcon, Save, Trash2Icon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import MetricModal from './IndividualPerformance/Settings/MetricModal';
 import MetricItem from './IndividualPerformance/Settings/MetricItem';
@@ -19,9 +19,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/Comp
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { QAElement } from '@/types/QAElement';
-import ElementItem from './QMSComponents/Settings/ElementItem';
-import ElementModal from './QMSComponents/Settings/ElementModal';
-import DeleteElementModal from './QMSComponents/Settings/DeleteElementModal';
+import ElementItem from './QMSComponents/QAElementSettings/ElementItem';
+import ElementModal from './QMSComponents/QAElementSettings/ElementModal';
+import DeleteElementModal from './QMSComponents/QAElementSettings/DeleteElementModal';
 interface Props {
     project?:Project;
     elements?:QAElement[];
@@ -89,7 +89,7 @@ const QMSSettings:FC<Props> = ({elements,project}) => {
             <Layout>
                 <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container pb-2.5'>
                     <div className='md:relative flex flex-row md:flex-col items-center'>
-                        <Header logo='performance'  title="Quality Assessment Settings" />                        
+                        <Header logo='performance'  title="QA Settings" />                        
                         <IPDDropdown isAdmin isTeamLead project_id={project?.id} className='md:absolute md:right-0 md:top-[0.7rem] !ring-offset-background focus-visible:!outline-none' />
                     </div>
                     <div className="flex-1 flex flex-col overflow-y-auto gap-y-3.5">
@@ -156,6 +156,11 @@ const QMSSettings:FC<Props> = ({elements,project}) => {
                                                         </Draggable>
                                                     )
                                                 })}
+                                                {!(elementState?.length) && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={5} className='text-center text-2xl'>No Data Assigned.</TableCell>
+                                                    </TableRow>   
+                                                )}
                                             </TableBody>
                                         )}
                                         </Droppable>

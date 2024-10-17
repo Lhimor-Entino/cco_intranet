@@ -21,8 +21,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $guarded = [];
-    protected $with = ['shift','project'];
-    protected $appends = ['has_settings_access','team_join_date'];
+    protected $with = ['shift', 'project'];
+    protected $appends = ['has_settings_access', 'team_join_date', 'qa_assigned_date'];
 
     /**
      * The attributes that should be hidden for arrays.
@@ -58,10 +58,15 @@ class User extends Authenticatable
         return Str::headline(Str::of($value)->lower());
     }
 
-    public function getPhotoAttribute($value){
-        if($value && str_contains( strtolower($value),'http')){return $value;}
-        if(!$value){return null;}
-        return url('/').'/public/'. $value;
+    public function getPhotoAttribute($value)
+    {
+        if ($value && str_contains(strtolower($value), 'http')) {
+            return $value;
+        }
+        if (!$value) {
+            return null;
+        }
+        return url('/') . '/public/' . $value;
     }
 
     public function getCompanyIdAttribute($value)
@@ -95,7 +100,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserSkill::class);
     }
-    
+
     public function violations()
     {
         return $this->hasMany(UserViolation::class);
@@ -103,7 +108,7 @@ class User extends Authenticatable
 
     public function supervisor()
     {
-        return $this->belongsTo(User::class,'user_id','id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function team()
@@ -111,22 +116,22 @@ class User extends Authenticatable
         return $this->belongsTo(Team::class);
     }
 
-    public function getHasSettingsAccessAttribute():Bool
+    public function getHasSettingsAccessAttribute(): Bool
     {
-        return $this->position=='PROGRAMMER'||
-            $this->position=='REPORTS ANALYST'||
-            $this->position=='QUALITY ANALYST 5'||
-            $this->position=='REAL TIME ANALYST'||
-            $this->position=='GENERAL MANAGER'||
-            $this->position=='OPERATIONS SUPERVISOR'||
-            $this->position=='QUALITY ANALYST 1'||
-            $this->position=='OPERATIONS SUPERVISOR 2'||
-            $this->position=='QUALITY ANALYST 6'||
-            $this->position=='QUALITY ANALYST 2'||
-            $this->position=='QUALITY ANALYST 4'||
-            $this->position=='QUALITY ASSURANCE AND TRAINING SUPERVISOR'||
-            $this->position=='QUALITY ANALYST'||
-            $this->position=='OPERATIONS MANAGER';
+        return $this->position == 'PROGRAMMER' ||
+            $this->position == 'REPORTS ANALYST' ||
+            $this->position == 'QUALITY ANALYST 5' ||
+            $this->position == 'REAL TIME ANALYST' ||
+            $this->position == 'GENERAL MANAGER' ||
+            $this->position == 'OPERATIONS SUPERVISOR' ||
+            $this->position == 'QUALITY ANALYST 1' ||
+            $this->position == 'OPERATIONS SUPERVISOR 2' ||
+            $this->position == 'QUALITY ANALYST 6' ||
+            $this->position == 'QUALITY ANALYST 2' ||
+            $this->position == 'QUALITY ANALYST 4' ||
+            $this->position == 'QUALITY ASSURANCE AND TRAINING SUPERVISOR' ||
+            $this->position == 'QUALITY ANALYST' ||
+            $this->position == 'OPERATIONS MANAGER';
     }
 
     public function team_histories()
@@ -134,14 +139,28 @@ class User extends Authenticatable
         return $this->hasMany(TeamHistory::class);
     }
 
+    public function qa_group_histories()
+    {
+        return $this->hasMany(QaGroupHistories::class, 'user_id');
+    }
+
+    public function getQaAssignedDateAttribute()
+    {
+        $latest = $this->qa_group_histories()->orderBy('id', 'desc')->first();
+        return $latest ? $latest->start_date : null;
+    }
     public function getTeamJoinDateAttribute()
     {
-        $latest= $this->team_histories()->orderBy('id','desc')->first() ;
+        $latest = $this->team_histories()->orderBy('id', 'desc')->first();
         return $latest ? $latest->start_date : null;
     }
 
     public function user_metrics()
     {
         return $this->hasMany(IndividualPerformanceUserMetric::class);
+    }
+    public function user_elements()
+    {
+        return $this->hasMany(QaElementScores::class, 'user_id');
     }
 }

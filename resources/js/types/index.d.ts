@@ -2,6 +2,7 @@ import { PaginationLink } from '@/Components/ui/pagination';
 
 import ziggy from 'ziggy-js'
 import { IndividualPerformanceMetric, IndividualPerformanceUserMetric, MetricFormat } from './metric';
+import { QAElement, QAElementScore, QAGroup } from './QAElement';
 
 export interface User {
     id: number;
@@ -33,7 +34,10 @@ export interface User {
     team_id?:number;
     team?:Team;
     team_join_date?:string;
+    qa_group: QAGroup;
+    qa_assigned_date?:string;
     user_metrics:IndividualPerformanceUserMetric[];
+    user_elements: QAElementScore[];
     // Date of Record
     created_at?:Date;
     updated_at?:Date;
@@ -130,6 +134,7 @@ export interface Project extends TimeStamp{
     id: number;
     name: string;
     metrics:IndividualPerformanceMetric[];
+    elements:QAElement[];
 }
 
 export interface ProjectHistory {

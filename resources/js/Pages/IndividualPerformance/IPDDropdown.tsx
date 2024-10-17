@@ -1,7 +1,7 @@
 import { Button } from "@/Components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/Components/ui/dropdown-menu";
 import { Inertia } from "@inertiajs/inertia";
-import { MoreVerticalIcon, LayoutDashboardIcon, Dot, LockKeyholeIcon, BoxesIcon, Gauge, ActivityIcon } from "lucide-react";
+import { MoreVerticalIcon, LayoutDashboardIcon, Dot, LockKeyholeIcon, BoxesIcon, Gauge, ActivityIcon, BadgeCheck } from "lucide-react";
 import { FC } from "react";
 import { toast } from "sonner";
 
@@ -59,7 +59,18 @@ const IPDDropdown:FC<IPDDropdownProps> = ({isAdmin,className,project_id,isTeamLe
                                 <ActivityIcon className='w-4 h-4 mr-1.5' />
                                 Rate Agents
                             </DropdownMenuItem>
-                        </DropdownMenuGroup>                
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator/>
+                        <DropdownMenuGroup className='text-info'>
+                            <DropdownMenuLabel className='flex items-center'>
+                                <BadgeCheck className='w-6 h-6 mr-1.5' />
+                                QA Functions:
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem  onClick={()=>Inertia.get(route('qa_group.scoring'))}>
+                                <ActivityIcon className='w-4 h-4 mr-1.5' />
+                                Score Agents
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>                       
                         <DropdownMenuSeparator/>
                         <DropdownMenuGroup className='text-success'>
                             <DropdownMenuLabel className='flex items-center'>
@@ -69,6 +80,10 @@ const IPDDropdown:FC<IPDDropdownProps> = ({isAdmin,className,project_id,isTeamLe
                             <DropdownMenuItem disabled={route().current('individual_performance_dashboard.settings')} onClick={handleAdminSettingsClick}>
                                 <Gauge className='w-4 h-4 mr-1.5' />
                                 Metric Settings
+                            </DropdownMenuItem>
+                            <DropdownMenuItem disabled={route().current('quality_management_system.settings')} onClick={()=>Inertia.get(route('quality_management_system.settings'))}>
+                                <Gauge className='w-4 h-4 mr-1.5' />
+                                QA Elements
                             </DropdownMenuItem>
                         </DropdownMenuGroup>                        
                     </>

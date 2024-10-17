@@ -15,6 +15,11 @@ class Project extends Model
         return $this->hasMany(User::class);
     }
 
+    public function elements()
+    {
+        return $this->hasMany(QAElements::class, 'project_id')->orderBy('position', 'asc');
+    }
+
     public function metrics()
     {
         return $this->hasMany(IndividualPerformanceMetric::class)->orderBy('position', 'asc');

@@ -1,7 +1,7 @@
 import {FC, ReactNode, useEffect, useMemo, useState} from 'react';
 import { NavItems } from '@/Pages/Welcome';
 import { Button } from './ui/button';
-import { CircleUserRound,  Clock,  ClockIcon,  Globe,  KeyRound,  MenuIcon, MoreVerticalIcon, SettingsIcon, ShieldAlertIcon, Users2Icon } from 'lucide-react';
+import { BadgeCheck, CircleUserRound,  Clock,  ClockIcon,  Globe,  KeyRound,  MenuIcon, MoreVerticalIcon, SettingsIcon, ShieldAlertIcon, Users2Icon } from 'lucide-react';
 import MenuSheet from './MenuSheet';
 import { useAuthModal } from '@/Hooks/useAuthModal';
 import { Link, usePage } from '@inertiajs/inertia-react';
@@ -162,6 +162,10 @@ const Settings:FC<SettingsProps> = ({children,onShowDebugLoginModal}) =>{
                     <DropdownMenuItem onClick={()=>openShiftSettings(user.position)}>
                         <ClockIcon className="mr-2 h-4 w-4" />
                         <span>Shift Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={()=>Inertia.get(route('qa_group.index'))}>
+                        <BadgeCheck className="mr-2 h-4 w-4" />
+                        <span>QA Settings</span>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>         
             </DropdownMenuContent>

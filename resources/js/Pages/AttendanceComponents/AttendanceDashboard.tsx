@@ -186,26 +186,26 @@ const BreakdownBlock:FC<BreakdownBlockProps> = ({label,total,present,absent,shif
             <div className='flex flex-col gap-y-1.5 text-muted-foreground font-light'>
                 <div className='w-full flex items-center justify-between '>
                     <p>Total:</p>
-                    <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                    <div className='border-b-4 border-primary/50 border-dotted w-full mr-2 ml-2'></div>
                     <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0")}} className="p-0 m-0" size={'sm'} variant="link">{total}</Button></p>
                 </div>
                 <div className='w-full flex items-center justify-between'>
                     <p>Present:</p>
-                    <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                    <div className='border-b-4 border-primary/50 border-dotted w-full mr-2 ml-2'></div>
                     <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0", 'present')}} className="p-0 m-0" size={'sm'} variant="link">{present}</Button></p>
                     {/* <p>{present}</p> */}
                 </div>
                 {shift?.is_swing!==1?(                    
                     <div className={cn('w-full flex items-center justify-between',isFuture?'text-red-600':'text-muted-foreground')}>
                         <p>Absent:</p>
-                        <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                        <div className='border-b-4 border-primary/50 border-dotted w-full mr-2 ml-2'></div>
                         <p><Button disabled={isFuture && !!shift} onClick={() => {redirectShift(shift?.id.toString() || "0", 'absent')}} className={"p-0 m-0 " + cn(isFuture&&'text-red-600 text-xs whitespace-nowrap')} size={'sm'} variant="link">{`${isFuture && !!shift?'Not Yet '+shift.start_time  :absent}`}</Button></p>
                         {/* <p className={cn(isFuture&&'text-xs whitespace-nowrap')}>{`${isFuture && !!shift?'Not Yet '+shift.start_time  :absent}`}</p> */}
                     </div>
                 ):(
                     <div className={cn('w-full flex items-center justify-between text-muted-foreground')}>
                         <p>Absent:</p>
-                        <div className='border-b-4 border-dotted w-full mr-2 ml-2'></div>
+                        <div className='border-b-4 border-primary/50 border-dotted w-full mr-2 ml-2'></div>
                         <p><Button onClick={() => {redirectShift(shift?.id.toString() || "0", 'absent')}} className="p-0 m-0" size={'sm'} variant="link">{absent}</Button></p>
                         {/* <p>{`${absent}`}</p> */}
                     </div>

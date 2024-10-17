@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\QaGroups;
 use App\Models\Team;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
@@ -189,6 +190,24 @@ class HRMSController extends Controller
             ]);
         }
         return redirect()->route('team.index', ['team_id' => Team::first()->id]);
+    }
+    public function auto_create_qa_group()
+    {
+        $qa_users = User::where('position', 'like', '%quality%')->get();
+        foreach ($qa_users as $qa_user) {
+            $qa_group = QaGroups::firstOrCreate(
+                [
+                    'user_id' => $qa_user->id,
+                ],
+                [
+                    'name' => 'QA - ' . $qa_user['first_name'],
+                ]
+            );
+            $qa_user->update([
+                'qa_group_id' => $qa_group->id
+            ]);
+        }
+        return redirect()->route('qa_group.index', ['qa_group_id' => QaGroups::first()->id]);
     }
 
     public function get_leave_credits($company_id = null)
