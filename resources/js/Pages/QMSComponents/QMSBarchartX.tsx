@@ -74,7 +74,7 @@ const QMSBarchartX:FC<Props> = () => {
 
     
     return (
-        <ResponsiveContainer height={150} width={'100%'}>
+        <ResponsiveContainer height={350} width={'100%'}>
             <BarChart data={remapped}>
                 <CartesianGrid stroke='#64748b' strokeDasharray="3 3" />
                 <XAxis className='text-xs border' dataKey="Metric" />

@@ -23,6 +23,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover
 import { Calendar } from "@/Components/ui/calendar";
 import { format } from "date-fns";
 import ProjectSelectionComboBox from "./IndividualPerformance/ProjectSelectionComboBox";
+import { AuditBoardDataTable } from "./QMSComponents/AuditBoard/AuditBoardDataTable";
+import { AuditColumns } from "./QMSComponents/AuditBoard/AuditColumns";
+
 
 interface Props {
     is_team_leader:boolean;
@@ -33,10 +36,11 @@ interface Props {
     projects: Project[];
     team_projects: Project[];
     project : Project;
+    agents: QMS[];
 }
 
-const QMS:FC<Props> = ({is_team_leader,is_admin,date_range,teams,team,projects,team_projects,project}) => {
-    const sample_data: QMS[] = [];
+const QMS:FC<Props> = ({agents,is_team_leader,is_admin,date_range,teams,team,projects,team_projects,project}) => {
+    console.log('Agents : ', agents);
     const [toggle,setToggle] = useState(true);
     const [date, setDate] = useState<DateRange | undefined>(date_range);
     useMemo(() => {
@@ -48,73 +52,33 @@ const QMS:FC<Props> = ({is_team_leader,is_admin,date_range,teams,team,projects,t
       <>
           <Head title="Quality Management System" />
             <Layout title={`Quality Management System`} >
-                <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container py-2.5'>
-                    <div className="w-full flex justify-end">
-                            <Button variant={'outline'} size={'sm'} className="mr-2"
-                                onClick={() => setToggle(!toggle)}>
-                                {toggle? 'Go to Audit Board' : 'Go to Homepage'}
-                                {toggle? (<ListChecks className="ml-2" />) : (<Home className="ml-2" />)}
-                            </Button>
-                            <FilterDialog 
-                            date={date}
-                            project={project}
-                            setDate={setDate}
-                            team={team}
-                            team_projects={team_projects}
-                            teams={teams}/>
-                    </div>
-                    <Card className="border-primary/50 border-2 shadow-xl w-full">
-                            <CardContent className="p-0 border grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 border">
-                                    <div className="flex justify-center">
-                                    <div>
-                                        <small className="text-primary/70">Completion Rate</small>
-                                        <h1 className="text-5xl">60%</h1>
-                                        <small className="text-primary/70">60 out of 100</small>
-                                    </div>
-                                    </div>
-                                    <div className="flex items-center p-2  p-0">
-                                    <div className="flex-grow  p-0 m-0">
-                                            <small className="text-primary/70">AVG. Audit Time</small>
-                                                <h1 className="text-2xl">10 hr 10 min 52 sec</h1>
-                                            <small className="text-primary/70">Goal: 10min 0 sec</small>
-                                    </div>
-                                    </div>
-                                    <div className="flex items-center p-2  p-0">
-                                    <div className="flex-grow  p-0 m-0">
-                                            <small className="text-primary/70">AVG. Audit Score </small>
-                                                <h1 className="text-2xl">-4.09</h1>
-                                            <small className="text-primary/70">Goal: -5 to +5</small>
-                                    </div>
-                                    </div>
-                                    <div className="flex items-center p-2  p-0">
-                                    <div className="flex-grow  p-0 m-0">
-                                            <small className="text-primary/70">AVG. Audit Time</small>
-                                                <h1 className="text-2xl">89.97%%</h1>
-                                            <small className="text-primary/70">Goal: 90.00%</small>
-                                    </div>
-                                    </div>
-                            </CardContent>
-                        </Card>
-                    <ScrollArea className='border-t flex-1 p-2'>
-                        <div className=" grid grid-cols-2 gap-4 h-full">
-                            <div className=" text-white p-0">
-                                <Card className="h-full border-primary/50 border-2 shadow-xl w-full">
-                                    <QMSDataTable data={sample_data}  columns={QMSColumns}/>
-                                </Card>
-                            </div>
-                            <div className=" text-white p-0">
-                                <Card className="h-full border-primary/50 border-2 shadow-xl w-full">
-                                    <CardContent className="p-5">
-                                    <ScrollArea className="h-46">
-                                        <QMSBarchartX/>
-                                        <QMSBarchartY/>
-                                    </ScrollArea>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    </ScrollArea>
+            <div className='h-full flex flex-col gap-y-3.5 px-[1.75rem] container py-2.5'>
+                <div className="flex justify-end">
+                    <Button variant={'outline'} size={'sm'} className="mr-2"
+                        onClick={() => setToggle(!toggle)}>
+                        {toggle ? 'Go to Audit Board' : 'Go to Homepage'}
+                        {toggle ? (<ListChecks className="ml-2" />) : (<Home className="ml-2" />)}
+                    </Button>
+                    <FilterDialog
+                        date={date}
+                        project={project}
+                        setDate={setDate}
+                        team={team}
+                        team_projects={team_projects}
+                        teams={teams} />
                 </div>
+                { toggle && (
+                    <div className='flex-1 overflow-y-hidden'>
+                       <QMSDashboard agents={agents}/>
+                    </div>
+                )}
+
+                { !toggle && (
+                    <div className='flex-1 overflow-y-hidden'>
+                        <AuditBoardDataTable columns={AuditColumns} data={agents}/>
+                    </div>
+                )}
+            </div>
             </Layout>
       </>
     );
@@ -220,5 +184,59 @@ const FilterDialog:FC<Filter> = ({className,date_range,teams,team,team_projects,
           </DialogContent>
       </Dialog>
     );
+}
+interface dashboard{
+    agents:QMS[];
+}
+const QMSDashboard:FC<dashboard> = ({agents}) => {
+    return (
+        <div className='flex flex-col h-full gap-y-2 overflow-y-auto lg:overflow-y-hidden '>
+            <Card className="border-primary/50 border-2 shadow-xl w-full h-auto">
+                <CardContent className="p-0  grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 ">
+                    <div className="flex justify-center">
+                        <div>
+                            <small className="text-primary/70">Completion Rate</small>
+                            <h1 className="text-5xl">60%</h1>
+                            <small className="text-primary/70">60 out of 100</small>
+                        </div>
+                    </div>
+                    <div className="flex items-center p-2  p-0">
+                        <div className="flex-grow  p-0 m-0">
+                            <small className="text-primary/70">AVG. Audit Time</small>
+                            <h1 className="text-2xl">10 hr 10 min 52 sec</h1>
+                            <small className="text-primary/70">Goal: 10min 0 sec</small>
+                        </div>
+                    </div>
+                    <div className="flex items-center p-2  p-0">
+                        <div className="flex-grow  p-0 m-0">
+                            <small className="text-primary/70">AVG. Audit Score </small>
+                            <h1 className="text-2xl">-4.09</h1>
+                            <small className="text-primary/70">Goal: -5 to +5</small>
+                        </div>
+                    </div>
+                    <div className="flex items-center p-2  p-0">
+                        <div className="flex-grow  p-0 m-0">
+                            <small className="text-primary/70">AVG. Audit Time</small>
+                            <h1 className="text-2xl">89.97%%</h1>
+                            <small className="text-primary/70">Goal: 90.00%</small>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card> 
+            <div className='flex-1 gap-y-3.5 flex flex-col overflow-auto'>
+                <div className=" gap-4 grid grid-cols-2 flex  border-primary/50 rounded-md max-h-screen h-full flex flex-col gap-y-2.5 pb-2.5">
+                    <div className=" flex-1 overflow-y-auto">
+                        <QMSDataTable data={agents} columns={QMSColumns}/>
+                    </div>
+                    <div className="border border-2 rounded-md border-primary/50 flex-1 overflow-y-auto">
+                        <QMSBarchartX/>
+                        <QMSBarchartY/>
+                    </div>
+                </div>
+             
+            </div>
+        </div>
+        
+    )
 }
 export default QMS;

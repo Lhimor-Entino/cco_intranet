@@ -20,7 +20,6 @@ class QMSController extends Controller
 {
     public function index(Request $request, $team_id = null, $project_id = null)
     {
-
         $user = Auth::user();
         $team = !$team_id ? Team::firstOrFail() : Team::where('id', $team_id)->firstOrFail();
         // return $team_id;
@@ -43,7 +42,7 @@ class QMSController extends Controller
         $tl_user = User::where('id', $team->user_id)->first();
         $projects = collect(self::LeadedProjectswithHistories($tl_user));
         $project_id = $project_id ? $project_id : $projects[0]['id'];
-        $users = User::where('team_id', $team->id)->where('users.project_id', $project_id)->get();
+        // return self::QAElementA($team_id, $project_id);
         return Inertia::render('QMS', [
             'is_admin' => $this->is_admin(),
             'is_team_leader' => $this->is_team_lead(),
@@ -55,8 +54,25 @@ class QMSController extends Controller
             'team' => $team,
             'project' => $projects,
             'project' => Project::find($project_id) ??  ["id" => 0, "name" => "No Project Found", "metrics" => []],
-            'agents' => $users
+            'agents' => self::agents($team_id, $project_id)
         ]);
+    }
+    function QAElementA($team_id, $project_id)
+    {
+        return  User::with('team', 'user_elements')->get();
+    }
+    function agents($team_id, $project_id)
+    {
+        return  User::with('team', 'user_elements')->where('team_id', $team_id)->where('users.project_id', $project_id)->get()
+            ->map(function ($user) {
+                return [
+                    'user_id' => $user->id,
+                    'tl_user_id' => $user->team->user_id,
+                    'user' => $user,
+                    'team_leader' => $user->team->user,
+                    'score' => 0
+                ];
+            });
     }
     public function settings($project_id = null)
     {

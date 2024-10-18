@@ -38,6 +38,16 @@ export interface QAGroupHistory extends TimeStamp {
     start_date:Date;
     qa_group: QAGroup;
 }
+
+export interface Audit extends TimeStamp{
+    id:number;
+    audited_by_id:number;
+    audited_by: User;
+    qa_element_score_id:number;
+    qa_element_score:QAElementScore;
+
+    
+}
 // export interface Setting{
 //     id:number;
 //     individual_performance_metric_id:number;

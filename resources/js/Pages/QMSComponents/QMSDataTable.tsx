@@ -22,7 +22,7 @@ export function QMSDataTable<TData,TValue>({columns,data}:
         }
     });
     return (
-        <div className="rounded-md border  h-full flex flex-col gap-y-2.5 pb-2.5">
+        <div className="flex border border-2 border-primary/50 rounded-md max-h-screen h-full flex flex-col gap-y-2.5 pb-2.5">
             <div className="flex-1 overflow-y-auto flex">
                 <Table className="h-auto">
                     <TableHeader className="sticky top-0 bg-background z-50">

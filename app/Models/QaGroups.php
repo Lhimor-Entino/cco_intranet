@@ -11,7 +11,7 @@ class QaGroups extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $with = ['user', 'elements'];
+    protected $with = ['user'];
     protected $fillable = ['user_id', 'name', 'qa_group_id'];
 
     public function user()
